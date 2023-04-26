@@ -1,103 +1,64 @@
 import numpy as np
 
 
-class WeightInitializer:
-    """Base class for weight initializers"""
-
-    def __init__(self, name, shape):
-        self.name = name
-        self.shape = shape
-
-    def __call__(self, *args, **kwargs):
-        return self.initialize(*args, **kwargs)
-
-    def initialize(self, *args, **kwargs):
-        raise NotImplementedError
-
-    def __repr__(self):
-        return self.name
-
-
-class RandomNormal(WeightInitializer):
+class RandomNormal:
     """Random normal distribution"""
 
-    def initialize(self, mean=0.0, stddev=0.05, seed=None):
-        if seed is not None:
-            np.random.seed(seed)
-        return np.random.normal(mean, stddev, self.shape)
+    def __init__(self, mean=0.0, stddev=0.05, seed=None):
+        self.mean = mean
+        self.stddev = stddev
+        self.seed = seed
+        self.rng = np.random.default_rng(seed=seed)
+
+    def __call__(self, shape):
+        return self.rng.normal(loc=self.mean, scale=self.stddev, size=shape)
+
+    def get_config(self):
+        return {
+            "mean": self.mean,
+            "stddev": self.stddev,
+            "seed": self.seed,
+        }
 
 
-class RandomUniform(WeightInitializer):
+class RandomUniform:
     """Random uniform distribution"""
 
-    def initialize(self, minval=-0.05, maxval=0.05, seed=None):
-        if seed is not None:
-            np.random.seed(seed)
-        return np.random.uniform(minval, maxval, self.shape)
+    def __init__(self, minval=-0.05, maxval=0.05, seed=None):
+        self.minval = minval
+        self.maxval = maxval
+        self.seed = seed
+        self.rng = np.random.default_rng(seed=seed)
+
+    def __call__(self, shape):
+        return self.rng.uniform(low=self.minval, high=self.maxval, size=shape)
+
+    def get_config(self):
+        return {
+            "minval": self.minval,
+            "maxval": self.maxval,
+            "seed": self.seed,
+        }
 
 
-class TruncatedNormal(WeightInitializer):
+class TruncatedNormal:
     """Truncated normal distribution"""
 
-    def initialize(self, mean=0.0, stddev=0.05, seed=None):
-        if seed is not None:
-            np.random.seed(seed)
-        return np.random.normal(mean, stddev, self.shape)
+    def __init__(self, mean=0.0, stddev=0.05, seed=None):
+        self.mean = mean
+        self.stddev = stddev
+        self.seed = seed
+        self.rng = np.random.default_rng(seed=seed)
 
+    def __call__(self, shape):
+        r = self.rng.normal(loc=self.mean, scale=self.stddev, size=shape)
 
-class Zeros(WeightInitializer):
-    """Zeros"""
+        limit = 2 * self.stddev
+        return np.clip(r, self.mean - limit, self.mean + limit)
 
-    def initialize(self):
-        return np.zeros(self.shape)
-
-
-class Ones(WeightInitializer):
-    """Ones"""
-
-    def initialize(self):
-        return np.ones(self.shape)
-
-
-class GlorotNormal(WeightInitializer):
-    """Glorot normal distribution"""
-
-    def initialize(self, seed=None):
-        if seed is not None:
-            np.random.seed(seed)
-        fan_in, fan_out = self.shape
-        stddev = np.sqrt(2 / (fan_in + fan_out))
-        return np.random.normal(0.0, stddev, self.shape)
-
-
-class GlorotUniform(WeightInitializer):
-    """Glorot uniform distribution"""
-
-    def initialize(self, seed=None):
-        if seed is not None:
-            np.random.seed(seed)
-        fan_in, fan_out = self.shape
-        limit = np.sqrt(6 / (fan_in + fan_out))
-        return np.random.uniform(-limit, limit, self.shape)
-
-
-class HeNormal(WeightInitializer):
-    """He normal distribution"""
-
-    def initialize(self, seed=None):
-        if seed is not None:
-            np.random.seed(seed)
-        fan_in, _ = self.shape
-        stddev = np.sqrt(2 / fan_in)
-        return np.random.normal(0.0, stddev, self.shape)
-
-
-class HeUniform(WeightInitializer):
-    """He uniform distribution"""
-
-    def initialize(self, seed=None):
-        if seed is not None:
-            np.random.seed(seed)
-        fan_in, _ = self.shape
-        limit = np.sqrt(6 / fan_in)
-        return np.random.uniform(-limit, limit, self.shape)
+    def get_config(self):
+        return {
+            "mean": self.mean,
+            "stddev": self.stddev,
+            "seed": self.seed,
+        }

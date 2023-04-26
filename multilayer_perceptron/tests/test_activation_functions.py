@@ -3,7 +3,7 @@ import sys
 sys.path.append("..")
 import numpy as np
 import unittest
-import activation_functions as my_activations
+import activations as my_activations
 from tensorflow.keras import activations as keras_activations
 import tensorflow as tf
 

@@ -4,74 +4,63 @@ sys.path.append("..")
 
 import unittest
 import numpy as np
-from initializers import *
+import initializers as my_initializers
+from tensorflow.keras import initializers as keras_initializers
 
 
-class TestRandomNormal(unittest.TestCase):
-    def test_initialize(self):
-        initializer = RandomNormal("random_normal", (3, 3))
-        output = initializer.initialize()
-        self.assertEqual(output.shape, (3, 3))
+class TestInitializers(unittest.TestCase):
+    def setUp(self):
+        n = 1
+        self.shape = []
+        while n <= 1024:
+            self.shape.append((n, n))
+            n *= 2
 
+    def test_random_normal(self):
+        keras_random_normal = keras_initializers.RandomNormal(
+            seed=42, stddev=0.5, mean=15
+        )
+        my_random_normal = my_initializers.RandomNormal(seed=42, stddev=0.5, mean=15)
 
-class TestRandomUniform(unittest.TestCase):
-    def test_initialize(self):
-        initializer = RandomUniform("random_uniform", (3, 3))
-        output = initializer.initialize(minval=-0.1, maxval=0.1, seed=42)
-        self.assertEqual(output.shape, (3, 3))
-        self.assertLessEqual(output.min(), 0.1)
-        self.assertGreaterEqual(output.max(), -0.1)
+        for shape in self.shape:
+            keras_output = keras_random_normal(shape)
+            my_output = my_random_normal(shape)
 
+            np.testing.assert_array_almost_equal(keras_output.shape, my_output.shape)
 
-class TestTruncatedNormal(unittest.TestCase):
-    def test_initialize(self):
-        initializer = TruncatedNormal("truncated_normal", (3, 3))
-        output = initializer.initialize(mean=0.0, stddev=0.05, seed=42)
-        self.assertEqual(output.shape, (3, 3))
+            self.assertAlmostEqual(np.mean(my_output), 15, places=0)
+            self.assertAlmostEqual(np.std(my_output), 0.5, places=0)
 
+    def test_random_uniform(self):
+        keras_random_uniform = keras_initializers.RandomUniform(
+            seed=42, minval=-21, maxval=21
+        )
+        my_random_uniform = my_initializers.RandomUniform(
+            seed=42, minval=-21, maxval=21
+        )
 
-class TestZeros(unittest.TestCase):
-    def test_initialize(self):
-        initializer = Zeros("zeros", (3, 3))
-        output = initializer.initialize()
-        self.assertEqual(output.shape, (3, 3))
-        self.assertEqual(output.sum(), 0)
+        for shape in self.shape:
+            keras_output = keras_random_uniform(shape)
+            my_output = my_random_uniform(shape)
 
+            np.testing.assert_array_almost_equal(keras_output.shape, my_output.shape)
 
-class TestOnes(unittest.TestCase):
-    def test_initialize(self):
-        initializer = Ones("ones", (3, 3))
-        output = initializer.initialize()
-        self.assertEqual(output.shape, (3, 3))
-        self.assertEqual(output.sum(), 9)
+            self.assertTrue(np.all(my_output >= -21))
+            self.assertTrue(np.all(my_output <= 21))
 
+    def test_truncated_normal(self):
+        mean = 21
+        stddev = 10
+        my_truncated_normal = my_initializers.TruncatedNormal(
+            seed=42, mean=mean, stddev=stddev
+        )
 
-class TestGlorotNormal(unittest.TestCase):
-    def test_initialize(self):
-        initializer = GlorotNormal("glorot_normal", (3, 3))
-        output = initializer.initialize(seed=42)
-        self.assertEqual(output.shape, (3, 3))
+        for shape in self.shape:
+            my_output = my_truncated_normal(shape)
 
-
-class TestGlorotUniform(unittest.TestCase):
-    def test_initialize(self):
-        initializer = GlorotUniform("glorot_uniform", (3, 3))
-        output = initializer.initialize(seed=42)
-        self.assertEqual(output.shape, (3, 3))
-
-
-class TestHeNormal(unittest.TestCase):
-    def test_initialize(self):
-        initializer = HeNormal("he_normal", (3, 3))
-        output = initializer.initialize(seed=42)
-        self.assertEqual(output.shape, (3, 3))
-
-
-class TestHeUniform(unittest.TestCase):
-    def test_initialize(self):
-        initializer = HeUniform("he_uniform", (3, 3))
-        output = initializer.initialize(seed=42)
-        self.assertEqual(output.shape, (3, 3))
+            limit = 2 * stddev
+            self.assertTrue(np.all(my_output >= mean - limit))
+            self.assertTrue(np.all(my_output <= mean + limit))
 
 
 if __name__ == "__main__":
