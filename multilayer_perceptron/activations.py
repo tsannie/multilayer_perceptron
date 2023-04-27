@@ -37,3 +37,14 @@ def tanh(x):
 def exponential(x):
     """Exponential activation function. range [0, inf)"""
     return np.exp(x)
+
+
+ACTIVATION_FUNCTIONS = {
+    "relu": relu,
+    "sigmoid": sigmoid,
+    "softmax": softmax,
+    "softplus": softplus,
+    "softsign": softsign,
+    "tanh": tanh,
+    "exponential": exponential,
+}
