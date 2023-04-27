@@ -22,7 +22,7 @@ class TestActivations(unittest.TestCase):
 
     def test_relu(self):
         keras_relu = keras_activations.relu
-        my_relu = my_activations.relu
+        my_relu = my_activations.ReLU()
 
         for x in self.inputs:
             keras_output = keras_relu(x)
@@ -32,7 +32,7 @@ class TestActivations(unittest.TestCase):
 
     def test_sigmoid(self):
         keras_sigmoid = keras_activations.sigmoid
-        my_sigmoid = my_activations.sigmoid
+        my_sigmoid = my_activations.Sigmoid()
 
         for x in self.inputs:
             keras_output = keras_sigmoid(x)
@@ -42,7 +42,7 @@ class TestActivations(unittest.TestCase):
 
     def test_softmax(self):
         keras_softmax = keras_activations.softmax
-        my_softmax = my_activations.softmax
+        my_softmax = my_activations.Softmax()
 
         for x in self.inputs:
             scores = x.reshape(1, -1)
@@ -54,7 +54,7 @@ class TestActivations(unittest.TestCase):
 
     def test_softplus(self):
         keras_softplus = keras_activations.softplus
-        my_softplus = my_activations.softplus
+        my_softplus = my_activations.Softplus()
 
         for x in self.inputs:
             keras_output = keras_softplus(x)
@@ -64,7 +64,7 @@ class TestActivations(unittest.TestCase):
 
     def test_softsign(self):
         keras_softsign = keras_activations.softsign
-        my_softsign = my_activations.softsign
+        my_softsign = my_activations.Softsign()
 
         for x in self.inputs:
             keras_output = keras_softsign(x)
@@ -74,7 +74,7 @@ class TestActivations(unittest.TestCase):
 
     def test_tanh(self):
         keras_tanh = keras_activations.tanh
-        my_tanh = my_activations.tanh
+        my_tanh = my_activations.Tanh()
 
         for x in self.inputs:
             keras_output = keras_tanh(x)
@@ -84,7 +84,7 @@ class TestActivations(unittest.TestCase):
 
     def test_exponential(self):
         keras_exponential = keras_activations.exponential
-        my_exponential = my_activations.exponential
+        my_exponential = my_activations.Exponential()
 
         for x in self.inputs:
             keras_output = keras_exponential(x)

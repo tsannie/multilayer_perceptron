@@ -172,14 +172,14 @@ class Identity(Initializer):
 
 
 WEIGHTS_INITIALIZERS = {
-    "random_normal": RandomNormal(),
-    "random_uniform": RandomUniform(),
-    "truncated_normal": TruncatedNormal(),
-    "zeros": Zeros(),
-    "ones": Ones(),
-    "glorot_normal": GlorotNormal(),
-    "glorot_uniform": GlorotUniform(),
-    "he_normal": HeNormal(),
-    "he_uniform": HeUniform(),
-    "Identity": Identity(),
+    "random_normal": RandomNormal,
+    "random_uniform": RandomUniform,
+    "truncated_normal": TruncatedNormal,
+    "zeros": Zeros,
+    "ones": Ones,
+    "glorot_normal": GlorotNormal,
+    "glorot_uniform": GlorotUniform,
+    "he_normal": HeNormal,
+    "he_uniform": HeUniform,
+    "Identity": Identity,
 }
