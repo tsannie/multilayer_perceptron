@@ -109,7 +109,7 @@ class TestDenseLayer(unittest.TestCase):
         self.assertTrue(np.all(self.dense_layer.bias == 0))
 
     def test_forward(self):
-        shape = (5, self.n_neurons)
+        shape = (self.n_neurons, self.n_neurons)
         m = 50
         self.dense_layer.initialize(shape)
 
@@ -117,6 +117,19 @@ class TestDenseLayer(unittest.TestCase):
         outputs = self.dense_layer.forward(inputs)
 
         self.assertEqual(outputs.shape, (50, self.n_neurons))
+
+    def test_backward(self):
+        shape = (self.n_neurons, self.n_neurons)
+        m = 50
+        self.dense_layer.initialize(shape)
+
+        inputs = np.random.randn(m, shape[0])
+        outputs = self.dense_layer.forward(inputs)
+
+        grad_outputs = np.random.randn(*outputs.shape)
+        grad_inputs = self.dense_layer.backward(grad_outputs, 0.1)
+
+        self.assertEqual(grad_inputs.shape, inputs.shape)
 
 
 if __name__ == "__main__":
