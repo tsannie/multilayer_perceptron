@@ -15,6 +15,16 @@ class Activation:
         raise NotImplementedError
 
 
+class Linear(Activation):
+    """Linear activation activate. range (-inf, inf)"""
+
+    def activate(self, x):
+        return x
+
+    def derivative(self, x):
+        return np.ones_like(x)
+
+
 class ReLU(Activation):
     """ReLU activation activate. range [0, inf)"""
 
@@ -89,6 +99,7 @@ class Exponential(Activation):
 
 
 ACTIVATION_FUNCTIONS = {
+    "linear": Linear,
     "relu": ReLU,
     "sigmoid": Sigmoid,
     "softmax": Softmax,

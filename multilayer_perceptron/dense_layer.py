@@ -27,10 +27,10 @@ class DenseLayer:
     def __init__(
         self,
         n_neurons,
-        activation=None,
+        activation="linear",
         input_dim=None,
-        weights_initializer=None,
-        bias_initializer=None,
+        weights_initializer="glorot_uniform",
+        bias_initializer="zeros",
     ):
         self.n_neurons = n_neurons
         self.weights = None
@@ -56,14 +56,11 @@ class DenseLayer:
         set_bias_initializer(self, bias_initializer)
 
     def initialize(self, n_inputs):
-        if self.input_dim is not None:
-            n_inputs = self.input_dim
-
         # (n_inputs, n_neurons)
-        self.weights = self.weights_initializer((n_inputs, self.n_neurons))
+        self.weights = self.weights_initializer()((n_inputs, self.n_neurons))
 
         # (1, n_neurons)
-        self.bias = self.bias_initializer((1, self.n_neurons))
+        self.bias = self.bias_initializer()((1, self.n_neurons))
 
     def forward(self, inputs):
         self.inputs = inputs

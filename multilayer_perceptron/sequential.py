@@ -12,6 +12,10 @@ class Sequential:
     def add(self, layer):
         if not isinstance(layer, DenseLayer):
             raise TypeError("Layer must be a DenseLayer object.")
+        if len(self.layers) == 0 and layer.input_dim is None:
+            raise ValueError("Input dimension must be specified for first layer.")
+        elif len(self.layers) > 0 and layer.input_dim is not None:
+            raise ValueError("Input dimension must not be specified after first layer.")
         self.layers.append(layer)
 
     def compile(self, loss, optimizer, metrics=None):
@@ -21,5 +25,8 @@ class Sequential:
             self.metrics = metrics
 
         # Initialize all layers
-        for i in range(1, len(self.layers)):
-            self.layers[i].initialize((self.layers[i - 1].n_neurons,))
+        for layer in range(len(self.layers)):
+            if layer == 0:
+                self.layers[layer].initialize(self.layers[layer].input_dim)
+            else:
+                self.layers[layer].initialize(self.layers[layer - 1].n_neurons)

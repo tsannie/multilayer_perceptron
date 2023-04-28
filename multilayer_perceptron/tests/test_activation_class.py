@@ -20,6 +20,16 @@ class TestActivations(unittest.TestCase):
         self.inputs.append(np.full((10, 10), -100.0))
         self.inputs.append(np.full((10, 10), 100.0))
 
+    def test_linear(self):
+        keras_linear = keras_activations.linear
+        my_linear = my_activations.Linear()
+
+        for x in self.inputs:
+            keras_output = keras_linear(x)
+            my_output = my_linear(x)
+
+            np.testing.assert_array_equal(keras_output, my_output)
+
     def test_relu(self):
         keras_relu = keras_activations.relu
         my_relu = my_activations.ReLU()

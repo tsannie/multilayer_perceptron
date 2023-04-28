@@ -98,10 +98,10 @@ class TestDenseLayer(unittest.TestCase):
             pass
 
     def test_initialize(self):
-        shape = (5, self.n_neurons)
-        self.dense_layer.initialize(shape)
+        n_inputs = 21
+        self.dense_layer.initialize(n_inputs)
 
-        self.assertEqual(self.dense_layer.weights.shape, shape)
+        self.assertEqual(self.dense_layer.weights.shape, (n_inputs, self.n_neurons))
         self.assertEqual(self.dense_layer.bias.shape, (1, self.n_neurons))
 
         self.assertTrue(np.all(self.dense_layer.weights >= -1))
@@ -109,21 +109,21 @@ class TestDenseLayer(unittest.TestCase):
         self.assertTrue(np.all(self.dense_layer.bias == 0))
 
     def test_forward(self):
-        shape = (self.n_neurons, self.n_neurons)
+        n_inputs = 21
         m = 50
-        self.dense_layer.initialize(shape)
+        self.dense_layer.initialize(n_inputs)
 
-        inputs = np.random.randn(m, shape[0])
+        inputs = np.random.randn(m, n_inputs)
         outputs = self.dense_layer.forward(inputs)
 
         self.assertEqual(outputs.shape, (50, self.n_neurons))
 
     def test_backward(self):
-        shape = (self.n_neurons, self.n_neurons)
+        n_inputs = 21
         m = 50
-        self.dense_layer.initialize(shape)
+        self.dense_layer.initialize(n_inputs)
 
-        inputs = np.random.randn(m, shape[0])
+        inputs = np.random.randn(m, n_inputs)
         outputs = self.dense_layer.forward(inputs)
 
         grad_outputs = np.random.randn(*outputs.shape)
