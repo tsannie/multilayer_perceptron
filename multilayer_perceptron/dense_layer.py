@@ -1,26 +1,7 @@
 import numpy as np
-import initializers
-import activations
-
-
-def check_arguments(valid_options):
-    def decorator(func):
-        def wrapper(self, argument):
-            if isinstance(argument, str):
-                if argument not in valid_options:
-                    raise ValueError(
-                        "Invalid argument. {} not in list of valid options.".format(
-                            argument
-                        )
-                    )
-                argument = valid_options[argument]
-            elif not callable(argument):
-                raise ValueError("Invalid argument. ")
-            return func(self, argument)
-
-        return wrapper
-
-    return decorator
+from multilayer_perceptron import initializers
+from multilayer_perceptron import activations
+from multilayer_perceptron.utils import check_arguments
 
 
 class DenseLayer:
@@ -38,6 +19,8 @@ class DenseLayer:
         self.z = None
         self.inputs = None
         self.input_dim = input_dim
+        self.dW = None
+        self.dB = None
 
         @check_arguments(activations.ACTIVATION_FUNCTIONS)
         def set_activation(self, argument):
@@ -67,14 +50,9 @@ class DenseLayer:
         self.z = np.dot(self.inputs, self.weights) + self.bias
         return self.activation()(self.z)
 
-    def backward(self, dA, learning_rate):
-        m = self.inputs.shape[0]
-        dA = dA * self.activation()(self.z, derivative=True)
-        dW = 1 / m * np.dot(self.inputs.T, dA)
-        db = 1 / m * np.sum(dA, axis=0, keepdims=True)
-        dZ = np.dot(dA, self.weights.T)
-
-        self.weights -= learning_rate * dW
-        self.bias -= learning_rate * db
-
-        return dZ
+    def backward(self, grad):
+        grad = grad * self.activation().derivative()(self.z)
+        self.dW = np.dot(self.inputs.T, grad)
+        self.dB = np.sum(grad, axis=0, keepdims=True)
+        grad_inputs = np.dot(grad, self.weights.T)
+        return grad_inputs

@@ -99,3 +99,10 @@ class Adam(Optimizer):
     def _apply_gradients(self, grads_and_vars):
         for g, v in grads_and_vars:
             v -= g
+
+
+OPTIMIZERS = {
+    "sgd": SGD,
+    "rmsprop": RMSprop,
+    "adam": Adam,
+}
