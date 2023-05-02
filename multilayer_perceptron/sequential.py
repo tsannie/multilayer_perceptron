@@ -61,6 +61,8 @@ class Sequential:
         if batch_size is None:
             batch_size = x.shape[0]
 
+        print("Batch size: {}".format(batch_size))
+
         for epoch in range(epochs):
             current_loss = 0
             for i in range(0, x.shape[0], batch_size):
@@ -71,13 +73,18 @@ class Sequential:
                 for layer in self.layers:
                     output = layer.forward(output)
 
+                print("outputs before loss derivate {}".format(output[:5]))
                 grad = self.loss.derivative(output, y_batch)
+
+                print("grad after loss derivate {}".format(grad[:5]))
                 for layer in reversed(self.layers):
                     grad = layer.backward(grad)
 
                 for layer in self.layers:
-                    self.optimizer.apply_gradients(layer.weights, layer.dW)
-                    self.optimizer.apply_gradients(layer.bias, layer.dB)
+                    layer.weights = self.optimizer.apply_gradients(
+                        layer.dW, layer.weights
+                    )
+                    # layer.bias = self.optimizer.apply_gradients(layer.dB, layer.bias)
 
                 current_loss += self.loss(output, y_batch)
                 print(

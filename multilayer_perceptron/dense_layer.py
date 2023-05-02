@@ -40,18 +40,18 @@ class DenseLayer:
 
     def initialize(self, n_inputs):
         # (n_inputs, n_neurons)
-        self.weights = self.weights_initializer()((n_inputs, self.n_neurons))
+        self.weights = self.weights_initializer((n_inputs, self.n_neurons))
 
         # (1, n_neurons)
-        self.bias = self.bias_initializer()((1, self.n_neurons))
+        self.bias = self.bias_initializer((1, self.n_neurons))
 
     def forward(self, inputs):
         self.inputs = inputs
         self.z = np.dot(self.inputs, self.weights) + self.bias
-        return self.activation()(self.z)
+        return self.activation(self.z)
 
     def backward(self, grad):
-        grad = grad * self.activation().derivative(self.z)
+        grad = grad * self.activation.derivative(self.z)
         self.dW = np.dot(self.inputs.T, grad)
         self.dB = np.sum(grad, axis=0, keepdims=True)
         grad_inputs = np.dot(grad, self.weights.T)

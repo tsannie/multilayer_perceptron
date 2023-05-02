@@ -30,19 +30,20 @@ if __name__ == "__main__":
     df[1] = df[1].astype(int)
 
     y = df.values[:, 1].reshape(-1, 1)
-    X = df.values[:, 2:]
+    X = df.values[:, 2:3]
 
     X = standardize(X)
+    print(X)
 
     print(X.shape)
     print(y.shape)
 
     model = Sequential()
-    model.add(DenseLayer(32, input_dim=X.shape[1], activation="relu"))
-    model.add(DenseLayer(64, activation="relu"))
-    model.add(DenseLayer(128, activation="relu"))
-    model.add(DenseLayer(64, activation="relu"))
-    model.add(DenseLayer(1, activation="sigmoid"))
+    model.add(DenseLayer(1, input_dim=X.shape[1], activation="sigmoid"))
+    # model.add(DenseLayer(64, activation="relu"))
+    # model.add(DenseLayer(128, activation="relu"))
+    # model.add(DenseLayer(64, activation="relu"))
+    # model.add(DenseLayer(1, activation="sigmoid"))
 
     """     model = Sequential()
     model.add(Dense(32, input_dim=X.shape[1], activation="relu")) """
@@ -52,7 +53,7 @@ if __name__ == "__main__":
     model.add(Dense(1, activation="sigmoid")) """
     model.compile(loss="binary_crossentropy", optimizer="sgd")
     # model.summary()
-    model.fit(X, y, epochs=20, batch_size=10)
+    model.fit(X, y, epochs=1)
 """    history = model.fit(X, y, epochs=20, batch_size=10)
 
     df_test = pd.read_csv("./data/data_test.csv", header=None)

@@ -4,31 +4,22 @@ import numpy as np
 class Optimizer:
     def __init__(self, learning_rate=0.01):
         self.learning_rate = learning_rate
-        self.iterations = 0
 
-    def apply_gradients(self, grads_and_vars):
-        if not grads_and_vars:
-            return None
-        grads, variables = zip(*grads_and_vars)
-
+    def apply_gradients(self, grads, variables):
         if len(grads) != len(variables):
             raise TypeError(
                 "number of gradients is different from number of parameters"
             )
 
-        agg_grads_var = self._aggregate_gradients(zip(grads, variables))
-        self._apply_gradients(agg_grads_var)
+        grads, variables = self._aggregate_gradients(grads, variables)
+        new_variables = self._apply_gradients(grads, variables)
 
-        self.iterations += 1
-        return self.iterations
+        return new_variables
 
-    def variables(self):
-        return []
-
-    def _aggregate_gradients(self, grads_and_vars):
+    def _aggregate_gradients(self, grads, variables):
         raise NotImplementedError
 
-    def _apply_gradients(self, grads_and_vars):
+    def _apply_gradients(self, grads, variables):
         raise NotImplementedError
 
 
@@ -36,32 +27,38 @@ class SGD(Optimizer):
     def __init__(self, learning_rate=0.01):
         super().__init__(learning_rate)
 
-    def _aggregate_gradients(self, grads_and_vars):
-        return grads_and_vars
+    def _aggregate_gradients(self, grads, variables):
+        return grads, variables
 
-    def _apply_gradients(self, grads_and_vars):
-        for g, v in grads_and_vars:
-            v -= self.learning_rate * g
+    def _apply_gradients(self, grads, variables):
+        for g, v in zip(grads, variables):
+            print("weight", v)
+            print("gradient", g)
+            print("learning rate", self.learning_rate)
+            v = v - self.learning_rate * g
+            print("res", v)
+
+        return variables
 
 
-class RMSprop(Optimizer):
+""" class RMSprop(Optimizer):
     def __init__(self, learning_rate=0.001, rho=0.9, epsilon=1e-7):
         super().__init__(learning_rate)
         self.rho = rho
         self.epsilon = epsilon
         self.cache = {}
 
-    def _aggregate_gradients(self, grads_and_vars):
+    def _aggregate_gradients(self, grads, variables):
         if self.iterations == 0:
-            self.cache = [np.zeros_like(v) for _, v in grads_and_vars]
+            self.cache = [np.zeros_like(v) for _, v in grads, variables]
         agg_grads_var = []
-        for i, (g, v) in enumerate(grads_and_vars):
+        for i, (g, v) in enumerate(grads, variables):
             self.cache[i] = self.rho * self.cache[i] + (1 - self.rho) * g**2
             agg_grads_var.append(g / (np.sqrt(self.cache[i]) + self.epsilon), v)
         return agg_grads_var
 
-    def _apply_gradients(self, grads_and_vars):
-        for g, v in grads_and_vars:
+    def _apply_gradients(self, grads, variables):
+        for g, v in grads, variables:
             v -= self.learning_rate * g
 
 
@@ -75,11 +72,11 @@ class Adam(Optimizer):
         self.v = None
         self.t = 0
 
-    def _aggregate_gradients(self, grads_and_vars):
+    def _aggregate_gradients(self, grads, variables):
         if self.m is None:
-            self.m = [np.zeros_like(v) for _, v in grads_and_vars]
+            self.m = [np.zeros_like(v) for _, v in grads, variables]
         if self.v is None:
-            self.v = [np.zeros_like(v) for _, v in grads_and_vars]
+            self.v = [np.zeros_like(v) for _, v in grads, variables]
 
         self.t += 1
         learning_rate_t = (
@@ -89,20 +86,18 @@ class Adam(Optimizer):
         )
 
         agg_grads_var = []
-        for i, (g, v) in enumerate(grads_and_vars):
+        for i, (g, v) in enumerate(grads, variables):
             self.m[i] = self.beta1 * self.m[i] + (1 - self.beta1) * g
             self.v[i] = self.beta2 * self.v[i] + (1 - self.beta2) * g**2
             v -= learning_rate_t * self.m[i] / (np.sqrt(self.v[i]) + self.epsilon)
             agg_grads_var.append((g, v))
         return agg_grads_var
 
-    def _apply_gradients(self, grads_and_vars):
-        for g, v in grads_and_vars:
-            v -= g
+    def _apply_gradients(self, grads, variables):
+        for g, v in grads, variables:
+            v -= g """
 
 
 OPTIMIZERS = {
-    "sgd": SGD,
-    "rmsprop": RMSprop,
-    "adam": Adam,
+    "sgd": SGD(),
 }
