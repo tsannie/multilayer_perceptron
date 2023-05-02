@@ -1,6 +1,7 @@
 from multilayer_perceptron import dense_layer
 from multilayer_perceptron import optimizers
 from multilayer_perceptron.utils import check_arguments
+from multilayer_perceptron import losses
 
 
 class Sequential:
@@ -25,11 +26,15 @@ class Sequential:
         def set_optimizer(self, argument):
             self.optimizer = argument
 
+        @check_arguments(losses.LOSSES)
+        def set_loss(self, argument):
+            self.loss = argument
+
         set_optimizer(self, optimizer)
-        self.loss = loss
-        self.optimizer = optimizer
+        set_loss(self, loss)
         if metrics is not None:
             self.metrics = metrics
+        # TODO METRICS
 
         # Initialize all layers
         for layer in range(len(self.layers)):
@@ -44,6 +49,12 @@ class Sequential:
         if not self.compiled:
             raise RuntimeError("Model must be compiled before fitting.")
 
+        if self.loss is None:
+            raise RuntimeError("Loss function must be specified for fitting.")
+
+        if x.shape[1] != self.layers[0].input_dim:
+            raise ValueError("Input dimension of first layer must match input data.")
+
         if x is None or y is None:
             raise ValueError("x and y must be specified for fitting.")
 
@@ -56,19 +67,23 @@ class Sequential:
                 x_batch = x[i : i + batch_size]
                 y_batch = y[i : i + batch_size]
 
-                # Forward pass
                 output = x_batch
                 for layer in self.layers:
                     output = layer.forward(output)
 
-                # Backward pass
-                grad = self.loss.derivative()(output, y_batch)
+                grad = self.loss.derivative(output, y_batch)
                 for layer in reversed(self.layers):
                     grad = layer.backward(grad)
 
-                # Update weights
                 for layer in self.layers:
                     self.optimizer.apply_gradients(layer.weights, layer.dW)
                     self.optimizer.apply_gradients(layer.bias, layer.dB)
 
                 current_loss += self.loss(output, y_batch)
+                print(
+                    "Epoch: {} Loss: {}".format(
+                        epoch, current_loss / x.shape[0] * batch_size
+                    ),
+                    end="\r",
+                )
+            print()

@@ -51,7 +51,7 @@ class DenseLayer:
         return self.activation()(self.z)
 
     def backward(self, grad):
-        grad = grad * self.activation().derivative()(self.z)
+        grad = grad * self.activation().derivative(self.z)
         self.dW = np.dot(self.inputs.T, grad)
         self.dB = np.sum(grad, axis=0, keepdims=True)
         grad_inputs = np.dot(grad, self.weights.T)

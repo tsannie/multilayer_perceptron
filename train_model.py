@@ -2,11 +2,11 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-# from multilayer_perceptron.dense_layer import DenseLayer
-# from multilayer_perceptron.sequential import Sequential
+from multilayer_perceptron.dense_layer import DenseLayer
+from multilayer_perceptron.sequential import Sequential
 
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense
+# from tensorflow.keras.models import Sequential
+# from tensorflow.keras.layers import Dense
 
 file_name = "./data/data.csv"
 
@@ -38,22 +38,23 @@ if __name__ == "__main__":
     print(y.shape)
 
     model = Sequential()
-    model.add(Dense(32, input_dim=X.shape[1], activation="relu"))
-    model.add(Dense(64, activation="relu"))
+    model.add(DenseLayer(32, input_dim=X.shape[1], activation="relu"))
+    model.add(DenseLayer(64, activation="relu"))
+    model.add(DenseLayer(128, activation="relu"))
+    model.add(DenseLayer(64, activation="relu"))
+    model.add(DenseLayer(1, activation="sigmoid"))
+
+    """     model = Sequential()
+    model.add(Dense(32, input_dim=X.shape[1], activation="relu")) """
+    """     model.add(Dense(64, activation="relu"))
     model.add(Dense(128, activation="relu"))
     model.add(Dense(64, activation="relu"))
-    model.add(Dense(1, activation="sigmoid"))
-    model.compile(
-        loss="binary_crossentropy",
-        optimizer="adam",
-        metrics=[
-            "accuracy",
-        ],
-    )
-    model.summary()
-    history = model.fit(X, y, epochs=20, batch_size=10)
+    model.add(Dense(1, activation="sigmoid")) """
+    model.compile(loss="binary_crossentropy", optimizer="sgd")
+    # model.summary()
+    model.fit(X, y, epochs=20, batch_size=10)
+"""    history = model.fit(X, y, epochs=20, batch_size=10)
 
-    # test for data_test
     df_test = pd.read_csv("./data/data_test.csv", header=None)
     df_test[1] = df_test[1].replace("M", 1)
     df_test[1] = df_test[1].replace("B", 0)
@@ -67,7 +68,6 @@ if __name__ == "__main__":
     print(X_test.shape)
     print(y_test.shape)
 
-    # Evaluate model
     scores = model.evaluate(X_test, y_test)
     print("Test loss:", scores[0])
     print("Test accuracy:", scores[1])
@@ -83,4 +83,4 @@ if __name__ == "__main__":
     plt.title("Model Accuracy")
     plt.ylabel("Accuracy")
     plt.xlabel("Epoch")
-    plt.show()
+    plt.show() """
