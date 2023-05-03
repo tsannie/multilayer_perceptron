@@ -31,12 +31,8 @@ class SGD(Optimizer):
         return grads, variables
 
     def _apply_gradients(self, grads, variables):
-        for g, v in zip(grads, variables):
-            print("weight", v)
-            print("gradient", g)
-            print("learning rate", self.learning_rate)
-            v = v - self.learning_rate * g
-            print("res", v)
+        for i in range(len(grads)):
+            variables[i] -= self.learning_rate * grads[i]
 
         return variables
 

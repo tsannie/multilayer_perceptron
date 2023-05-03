@@ -30,7 +30,7 @@ if __name__ == "__main__":
     df[1] = df[1].astype(int)
 
     y = df.values[:, 1].reshape(-1, 1)
-    X = df.values[:, 2:3]
+    X = df.values[:, 2:]
 
     X = standardize(X)
     print(X)
@@ -53,7 +53,7 @@ if __name__ == "__main__":
     model.add(Dense(1, activation="sigmoid")) """
     model.compile(loss="binary_crossentropy", optimizer="sgd")
     # model.summary()
-    model.fit(X, y, epochs=1)
+    model.fit(X, y, batch_size=1, epochs=100)
 """    history = model.fit(X, y, epochs=20, batch_size=10)
 
     df_test = pd.read_csv("./data/data_test.csv", header=None)

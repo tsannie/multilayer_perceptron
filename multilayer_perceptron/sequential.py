@@ -3,6 +3,8 @@ from multilayer_perceptron import optimizers
 from multilayer_perceptron.utils import check_arguments
 from multilayer_perceptron import losses
 
+import numpy as np
+
 
 class Sequential:
     def __init__(self):
@@ -64,7 +66,6 @@ class Sequential:
         print("Batch size: {}".format(batch_size))
 
         for epoch in range(epochs):
-            current_loss = 0
             for i in range(0, x.shape[0], batch_size):
                 x_batch = x[i : i + batch_size]
                 y_batch = y[i : i + batch_size]
@@ -73,10 +74,10 @@ class Sequential:
                 for layer in self.layers:
                     output = layer.forward(output)
 
-                print("outputs before loss derivate {}".format(output[:5]))
-                grad = self.loss.derivative(output, y_batch)
+                # print("outputs before loss derivate {}".format(output[:5]))
+                grad = self.loss.derivative(y_batch, output)
 
-                print("grad after loss derivate {}".format(grad[:5]))
+                # print("grad after loss derivate {}".format(grad[:5]))
                 for layer in reversed(self.layers):
                     grad = layer.backward(grad)
 
@@ -84,12 +85,18 @@ class Sequential:
                     layer.weights = self.optimizer.apply_gradients(
                         layer.dW, layer.weights
                     )
-                    # layer.bias = self.optimizer.apply_gradients(layer.dB, layer.bias)
+                    layer.bias = self.optimizer.apply_gradients(layer.dB, layer.bias)
 
-                current_loss += self.loss(output, y_batch)
+                # compute loss
+                full_output = x
+                for layer in self.layers:
+                    full_output = layer.forward(full_output)
+
+                pred = np.where(full_output > 0.5, 1, 0)
+                losses = self.loss(y, pred)
                 print(
-                    "Epoch: {} Loss: {}".format(
-                        epoch, current_loss / x.shape[0] * batch_size
+                    "Epoch: {} Loss: {}, Batch: {}/{}".format(
+                        epoch + 1, losses, i, x.shape[0]
                     ),
                     end="\r",
                 )
