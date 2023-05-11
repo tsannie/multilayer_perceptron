@@ -29,7 +29,7 @@ class ReLU(Activation):
     """ReLU activation activate. range [0, inf)"""
 
     def activate(self, x):
-        return np.maximum(x, 0)
+        return np.maximum(0, x)
 
     def derivative(self, x):
         return np.where(x > 0, 1, 0)

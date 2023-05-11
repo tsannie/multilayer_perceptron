@@ -66,18 +66,23 @@ class Sequential:
         print("Batch size: {}".format(batch_size))
 
         for epoch in range(epochs):
+            losses = []
             for i in range(0, x.shape[0], batch_size):
                 x_batch = x[i : i + batch_size]
                 y_batch = y[i : i + batch_size]
 
+                # print("x_batch shape {}".format(x_batch.shape))
                 output = x_batch
                 for layer in self.layers:
                     output = layer.forward(output)
 
-                # print("outputs before loss derivate {}".format(output[:5]))
+                # print("LAYER 0 WEIGHTS", self.layers[0].weights)
+                # print("LAYER 0 SHAPE", self.layers[0].weights.shape)
+                # print("output", output)
+                # print("output_shape", output.shape)
                 grad = self.loss.derivative(y_batch, output)
-
                 # print("grad after loss derivate {}".format(grad[:5]))
+
                 for layer in reversed(self.layers):
                     grad = layer.backward(grad)
 
@@ -91,13 +96,13 @@ class Sequential:
                 full_output = x
                 for layer in self.layers:
                     full_output = layer.forward(full_output)
-
-                pred = np.where(full_output > 0.5, 1, 0)
-                losses = self.loss(y, pred)
+                # exit()
+                pred = self.loss(y, full_output)
                 print(
                     "Epoch: {} Loss: {}, Batch: {}/{}".format(
-                        epoch + 1, losses, i, x.shape[0]
+                        epoch + 1, pred, i, x.shape[0]
                     ),
                     end="\r",
                 )
+
             print()
