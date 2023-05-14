@@ -2,19 +2,19 @@ import sys
 
 sys.path.append("..")
 import unittest
-from dense_layer import DenseLayer
+from dense_layer import Dense
 import activations
 import initializers
 import numpy as np
 
 
-class TestDenseLayer(unittest.TestCase):
+class TestDense(unittest.TestCase):
     def setUp(self):
         self.activation = "relu"
         self.weights_initializer = initializers.GlorotNormal(seed=42)
         self.bias_initializer = initializers.Zeros()
         self.n_neurons = 10
-        self.dense_layer = DenseLayer(
+        self.dense_layer = Dense(
             n_neurons=self.n_neurons,
             activation=self.activation,
             weights_initializer=self.weights_initializer,
@@ -30,7 +30,7 @@ class TestDenseLayer(unittest.TestCase):
         self.assertIsNone(self.dense_layer.bias)
 
     def test_init_with_str_or_callable_activation(self):
-        self.dense_layer = DenseLayer(
+        self.dense_layer = Dense(
             n_neurons=self.n_neurons,
             activation="relu",
             weights_initializer=self.weights_initializer,
@@ -38,7 +38,7 @@ class TestDenseLayer(unittest.TestCase):
         )
         self.assertEqual(self.dense_layer.activation, activations.ReLU)
 
-        self.dense_layer = DenseLayer(
+        self.dense_layer = Dense(
             n_neurons=self.n_neurons,
             activation=activations.ReLU(),
             weights_initializer=self.weights_initializer,
@@ -47,7 +47,7 @@ class TestDenseLayer(unittest.TestCase):
         self.assertTrue(isinstance(self.dense_layer.activation, activations.ReLU))
 
     def test_init_with_str_or_callable_weights_initializer(self):
-        self.dense_layer = DenseLayer(
+        self.dense_layer = Dense(
             n_neurons=self.n_neurons,
             activation="relu",
             weights_initializer="glorot_normal",
@@ -60,7 +60,7 @@ class TestDenseLayer(unittest.TestCase):
 
         self.assertEqual(self.dense_layer.activation, activations.ReLU)
 
-        self.dense_layer = DenseLayer(
+        self.dense_layer = Dense(
             n_neurons=self.n_neurons,
             activation=activations.ReLU(),
             weights_initializer=initializers.GlorotNormal(),
@@ -76,7 +76,7 @@ class TestDenseLayer(unittest.TestCase):
 
     def test_init_with_invalid_arg(self):
         try:
-            self.dense_layer = DenseLayer(
+            self.dense_layer = Dense(
                 n_neurons=self.n_neurons,
                 activation="invalid",
                 weights_initializer=self.weights_initializer,
@@ -87,7 +87,7 @@ class TestDenseLayer(unittest.TestCase):
             pass
 
         try:
-            self.dense_layer = DenseLayer(
+            self.dense_layer = Dense(
                 n_neurons=self.n_neurons,
                 activation=42,
                 weights_initializer=self.weights_initializer,

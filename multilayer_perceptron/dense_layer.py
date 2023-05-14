@@ -4,7 +4,7 @@ from multilayer_perceptron import activations
 from multilayer_perceptron.utils import check_arguments
 
 
-class DenseLayer:
+class Dense:
     def __init__(
         self,
         n_neurons,

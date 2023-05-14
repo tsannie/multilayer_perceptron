@@ -2,17 +2,17 @@ import sys
 
 sys.path.append("..")
 import unittest
-from dense_layer import DenseLayer
+from dense_layer import Dense
 from sequential import Sequential
 
 
 class TestSequential(unittest.TestCase):
     def test_add_layer(self):
         model = Sequential()
-        dense_layer = DenseLayer(10, input_dim=5)
+        dense_layer = Dense(10, input_dim=5)
         model.add(dense_layer)
         self.assertEqual(len(model.layers), 1)
-        self.assertIsInstance(model.layers[0], DenseLayer)
+        self.assertIsInstance(model.layers[0], Dense)
 
     def test_add_invalid_layer(self):
         model = Sequential()
@@ -21,16 +21,16 @@ class TestSequential(unittest.TestCase):
 
     def test_add_input_dim_error(self):
         model = Sequential()
-        dense_layer1 = DenseLayer(n_neurons=10, input_dim=5)
+        dense_layer1 = Dense(n_neurons=10, input_dim=5)
         model.add(dense_layer1)
-        dense_layer2 = DenseLayer(n_neurons=20, input_dim=10)
+        dense_layer2 = Dense(n_neurons=20, input_dim=10)
         with self.assertRaises(ValueError):
             model.add(dense_layer2)
 
     def test_compile(self):
         model = Sequential()
-        model.add(DenseLayer(n_neurons=10, input_dim=5))
-        model.add(DenseLayer(n_neurons=1000))
+        model.add(Dense(n_neurons=10, input_dim=5))
+        model.add(Dense(n_neurons=1000))
         model.compile(loss="mse", optimizer="sgd", metrics=["accuracy"])
         self.assertEqual(model.loss, "mse")
         self.assertEqual(model.optimizer, "sgd")
@@ -38,8 +38,8 @@ class TestSequential(unittest.TestCase):
 
     def test_initialize_layers(self):
         model = Sequential()
-        model.add(DenseLayer(n_neurons=10, input_dim=5))
-        model.add(DenseLayer(n_neurons=1))
+        model.add(Dense(n_neurons=10, input_dim=5))
+        model.add(Dense(n_neurons=1))
         model.compile(loss="mse", optimizer="sgd")
         self.assertEqual(model.layers[0].weights.shape, (5, 10))
         self.assertEqual(model.layers[0].bias.shape, (1, 10))

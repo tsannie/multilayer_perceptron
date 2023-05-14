@@ -2,6 +2,7 @@ from multilayer_perceptron import dense_layer
 from multilayer_perceptron import optimizers
 from multilayer_perceptron.utils import check_arguments
 from multilayer_perceptron import losses
+from multilayer_perceptron import metrics
 
 import numpy as np
 
@@ -15,8 +16,8 @@ class Sequential:
         self.compiled = False
 
     def add(self, layer):
-        if not isinstance(layer, dense_layer.DenseLayer):
-            raise TypeError("Layer must be a DenseLayer object.")
+        if not isinstance(layer, dense_layer.Dense):
+            raise TypeError("Layer must be a Dense object.")
         if len(self.layers) == 0 and layer.input_dim is None:
             raise ValueError("Input dimension must be specified for first layer.")
         elif len(self.layers) > 0 and layer.input_dim is not None:
@@ -32,11 +33,15 @@ class Sequential:
         def set_loss(self, argument):
             self.loss = argument
 
+        @check_arguments(metrics.METRICS)
+        def set_metrics(self, argument):
+            self.metrics.append(argument)
+
         set_optimizer(self, optimizer)
         set_loss(self, loss)
-        if metrics is not None:
-            self.metrics = metrics
-        # TODO METRICS
+
+        for metric in metrics:
+            set_metrics(self, metric)
 
         # Initialize all layers
         for layer in range(len(self.layers)):
@@ -66,7 +71,7 @@ class Sequential:
         print("Batch size: {}".format(batch_size))
 
         for epoch in range(epochs):
-            losses = []
+            total_loss = 0
             for i in range(0, x.shape[0], batch_size):
                 x_batch = x[i : i + batch_size]
                 y_batch = y[i : i + batch_size]
@@ -79,7 +84,6 @@ class Sequential:
                 # print("LAYER 0 WEIGHTS", self.layers[0].weights)
                 # print("LAYER 0 SHAPE", self.layers[0].weights.shape)
                 # print("output", output)
-                # print("output_shape", output.shape)
                 grad = self.loss.derivative(y_batch, output)
                 # print("grad after loss derivate {}".format(grad[:5]))
 
@@ -93,14 +97,15 @@ class Sequential:
                     layer.bias = self.optimizer.apply_gradients(layer.dB, layer.bias)
 
                 # compute loss
-                full_output = x
-                for layer in self.layers:
-                    full_output = layer.forward(full_output)
-                # exit()
-                pred = self.loss(y, full_output)
+                total_loss += self.loss(y_batch, output)
+                training_loss = total_loss / (i + 1)
                 print(
-                    "Epoch: {} Loss: {}, Batch: {}/{}".format(
-                        epoch + 1, pred, i, x.shape[0]
+                    "Loss: {:.4f} - Epoch: {}/{} - Batch: {}/{}".format(
+                        training_loss,
+                        epoch + 1,
+                        epochs,
+                        i + batch_size,
+                        x.shape[0],
                     ),
                     end="\r",
                 )
