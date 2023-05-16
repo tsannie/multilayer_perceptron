@@ -23,6 +23,7 @@ class MeanMetric(Metric):
         self.count = 0
 
     def result(self):
+        print("Total: {}, Count: {}".format(self.total, self.count))
         return self.total / self.count
 
 
@@ -33,6 +34,7 @@ class Accuracy(MeanMetric):
     def update_state(self, y_true, y_pred):
         y_true = np.argmax(y_true, axis=1)
         y_pred = np.argmax(y_pred, axis=1)
+        print("y_true: {}, y_pred: {}".format(y_true[:5], y_pred[:5]))
         super().update_state(np.sum(y_true == y_pred) / len(y_true))
 
 

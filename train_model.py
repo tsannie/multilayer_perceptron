@@ -2,13 +2,26 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-# from multilayer_perceptron.dense_layer import Dense
-# from multilayer_perceptron.sequential import Sequential
+from multilayer_perceptron.dense_layer import Dense
+from multilayer_perceptron.sequential import Sequential
 
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense
+# from tensorflow.keras.models import Sequential
+# from tensorflow.keras.layers import Dense
 
 file_name = "./data/data.csv"
+
+
+def one_hot_encoding(y):
+    """One hot encoding for y"""
+
+    n_classes = len(np.unique(y))
+    classes = np.unique(y)
+    one_hot = np.zeros((y.shape[0], n_classes))
+    for i, c in enumerate(classes):
+        idx = np.where(y == c)
+        one_hot[idx, i] = 1
+
+    return one_hot
 
 
 def standardize(X):
@@ -25,54 +38,55 @@ if __name__ == "__main__":
     except FileNotFoundError:
         exit("File not found")
 
-    df[1] = df[1].replace("M", 1)
-    df[1] = df[1].replace("B", 0)
-    df[1] = df[1].astype(int)
-
-    y = df.values[:, 1].reshape(-1, 1)
-    X = df.values[:, 2:]
-
-    X = standardize(X)
-    print(X)
+    y = one_hot_encoding(df.values[:, 1])
+    X = standardize(df.values[:, 2:].astype(float))
+    print(X[:5])
+    # max value of X
+    print(np.max(X))
+    # min value of X
+    print(np.min(X))
 
     print(X.shape)
     print(y.shape)
 
-    # model = Sequential()
-    # model.add(Dense(1, input_dim=X.shape[1], activation="relu"))
-    # model.add(DenseLayer(128, activation="relu"))
-    # model.add(DenseLayer(64, activation="relu"))
-    # model.add(DenseLayer(1, activation="sigmoid"))
-
     model = Sequential()
-    model.add(Dense(1, input_dim=X.shape[1], activation="sigmoid"))
-    # model.add(Dense(64, activation="relu"))
-    # model.add(Dense(128, activation="relu"))
-    # model.add(Dense(64, activation="relu"))
-    # model.add(Dense(1, activation="sigmoid"))
-    model.compile(loss="binary_crossentropy", optimizer="sgd")
+    model.add(Dense(2, input_dim=X.shape[1], activation="sigmoid"))
+    # model.add(Dense(16, activation="relu"))
+    # model.add(Dense(2, activation="sigmoid"))
+
+    model.compile(
+        loss="binary_crossentropy",
+        optimizer="sgd",
+        metrics=["accuracy", "binary_accuracy"],
+    )
     # model.summary()
-    history = model.fit(X, y, batch_size=10, epochs=100)
+    history = model.fit(
+        X,
+        y,
+        batch_size=10,
+        epochs=100,
+    )
 
     df_test = pd.read_csv("./data/data_test.csv", header=None)
-    df_test[1] = df_test[1].replace("M", 1)
-    df_test[1] = df_test[1].replace("B", 0)
-    df_test[1] = df_test[1].astype(int)
 
-    y_test = df_test.values[:, 1].reshape(-1, 1)
-    X_test = df_test.values[:, 2:]
+    y_test = one_hot_encoding(df_test.values[:, 1])
+    X_test = standardize(df_test.values[:, 2:].astype(float))
+
+    # y_test print 5 first values
+    print("y_test: ", y_test[:5])
 
     X_test = standardize(X_test)
 
-    print(X_test.shape)
-    print(y_test.shape)
+    print("X_test shape: ", X_test.shape)
+    print("y_test shape: ", y_test.shape)
 
     print("Evaluate on the test data:")
     scores = model.evaluate(X_test, y_test)
     print("Test loss:", scores[0])
     print("Test accuracy:", scores[1])
+    print("Test binary_accuracy:", scores[2])
 
-"""     plt.plot(history.history["loss"])
+    """ plt.plot(history.history["loss"])
     plt.title("Model Loss")
     plt.ylabel("Loss")
     plt.xlabel("Epoch")

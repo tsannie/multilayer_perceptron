@@ -2,7 +2,7 @@ from multilayer_perceptron import dense_layer
 from multilayer_perceptron import optimizers
 from multilayer_perceptron.utils import check_arguments
 from multilayer_perceptron import losses
-from multilayer_perceptron import metrics
+from multilayer_perceptron import metrics as metrics_module
 
 import numpy as np
 
@@ -33,7 +33,7 @@ class Sequential:
         def set_loss(self, argument):
             self.loss = argument
 
-        @check_arguments(metrics.METRICS)
+        @check_arguments(metrics_module.METRICS)
         def set_metrics(self, argument):
             self.metrics.append(argument)
 
@@ -111,3 +111,38 @@ class Sequential:
                 )
 
             print()
+
+    def evaluate(self, x=None, y=None, batch_size=None):
+        if x is None or y is None:
+            raise ValueError("x and y must be specified for evaluation.")
+
+        if batch_size is None:
+            batch_size = x.shape[0]
+
+        scores = []
+        scores.append(0)
+
+        # TODO better gestion of batch_size
+
+        for metric in self.metrics:
+            metric.reset_state()
+
+        print("Batch size: {}".format(batch_size))
+        for i in range(0, x.shape[0], batch_size):
+            x_batch = x[i : i + batch_size]
+            y_batch = y[i : i + batch_size]
+
+            output = x_batch
+            for layer in self.layers:
+                output = layer.forward(output)
+
+            scores[0] += self.loss(y_batch, output)
+
+            for metric in self.metrics:
+                print("y_batch {}".format(y_batch[:5]))
+                metric.update_state(y_batch, output)
+
+        for metric in self.metrics:
+            scores.append(metric.result())
+
+        return scores
