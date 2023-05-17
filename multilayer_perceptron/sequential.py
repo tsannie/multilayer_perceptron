@@ -72,20 +72,17 @@ class Sequential:
 
         for epoch in range(epochs):
             total_loss = 0
+            for metric in self.metrics:
+                metric.reset_state()
             for i in range(0, x.shape[0], batch_size):
                 x_batch = x[i : i + batch_size]
                 y_batch = y[i : i + batch_size]
 
-                # print("x_batch shape {}".format(x_batch.shape))
                 output = x_batch
                 for layer in self.layers:
                     output = layer.forward(output)
 
-                # print("LAYER 0 WEIGHTS", self.layers[0].weights)
-                # print("LAYER 0 SHAPE", self.layers[0].weights.shape)
-                # print("output", output)
                 grad = self.loss.derivative(y_batch, output)
-                # print("grad after loss derivate {}".format(grad[:5]))
 
                 for layer in reversed(self.layers):
                     grad = layer.backward(grad)
@@ -96,16 +93,25 @@ class Sequential:
                     )
                     layer.bias = self.optimizer.apply_gradients(layer.dB, layer.bias)
 
+                for metric in self.metrics:
+                    metric.update_state(y_batch, output)
+
                 # compute loss
+                metrics = {}
+
+                for metric in self.metrics:
+                    metrics[metric.name] = "{:.4f}".format(metric.result())
+
                 total_loss += self.loss(y_batch, output)
                 training_loss = total_loss / (i + 1)
                 print(
-                    "Loss: {:.4f} - Epoch: {}/{} - Batch: {}/{}".format(
+                    "Loss: {:.4f} - Epoch: {}/{} - Batch: {}/{}, metrics: {}".format(
                         training_loss,
                         epoch + 1,
                         epochs,
                         i + batch_size,
                         x.shape[0],
+                        metrics,
                     ),
                     end="\r",
                 )
@@ -135,6 +141,7 @@ class Sequential:
             output = x_batch
             for layer in self.layers:
                 output = layer.forward(output)
+            print("output {}".format(output[:5]))
 
             scores[0] += self.loss(y_batch, output)
 

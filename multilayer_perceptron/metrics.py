@@ -2,6 +2,9 @@ import numpy as np
 
 
 class Metric:
+    def __init__(self, name):
+        self.name = name
+
     def reset_state(self):
         raise NotImplementedError
 
@@ -10,7 +13,8 @@ class Metric:
 
 
 class MeanMetric(Metric):
-    def __init__(self):
+    def __init__(self, name):
+        super().__init__(name)
         self.total = 0
         self.count = 0
 
@@ -23,24 +27,24 @@ class MeanMetric(Metric):
         self.count = 0
 
     def result(self):
-        print("Total: {}, Count: {}".format(self.total, self.count))
+        # print("Total: {}, Count: {}".format(self.total, self.count))
         return self.total / self.count
 
 
 class Accuracy(MeanMetric):
     def __init__(self):
-        super().__init__()
+        super().__init__("accuracy")
 
     def update_state(self, y_true, y_pred):
         y_true = np.argmax(y_true, axis=1)
         y_pred = np.argmax(y_pred, axis=1)
-        print("y_true: {}, y_pred: {}".format(y_true[:5], y_pred[:5]))
+        # print("y_true: {}, y_pred: {}".format(y_true[:5], y_pred[:5]))
         super().update_state(np.sum(y_true == y_pred) / len(y_true))
 
 
 class BinaryAccuracy(MeanMetric):
     def __init__(self):
-        super().__init__()
+        super().__init__("binary_accuracy")
 
     def update_state(self, y_true, y_pred):
         y_true = np.argmax(y_true, axis=1)

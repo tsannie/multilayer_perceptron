@@ -51,6 +51,10 @@ if __name__ == "__main__":
 
     model = Sequential()
     model.add(Dense(2, input_dim=X.shape[1], activation="sigmoid"))
+    model.add(Dense(16, activation="sigmoid"))
+    model.add(Dense(32, activation="tanh"))
+    model.add(Dense(16, activation="sigmoid"))
+    model.add(Dense(2, activation="sigmoid"))
     # model.add(Dense(16, activation="relu"))
     # model.add(Dense(2, activation="sigmoid"))
 
