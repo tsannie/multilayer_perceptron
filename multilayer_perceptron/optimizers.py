@@ -22,54 +22,63 @@ class Optimizer:
     def _apply_gradients(self, grads, variables):
         raise NotImplementedError
 
+    def reset(self):
+        pass
+
 
 class SGD(Optimizer):
     def __init__(self, learning_rate=0.01, momentum=0.0, nesterov=False):
         super().__init__(learning_rate)
-        self.momentum = momentum
+        self.momentumsomentum = momentum
         self.nesterov = nesterov
-        self.velocity = None
+        self.velocitieselocity = None
 
     def _aggregate_gradients(self, grads, variables):
         return grads, variables
 
     def _apply_gradients(self, grads, variables):
-        if self.velocity is None:
-            self.velocity = [np.zeros_like(v) for v in variables]
-
         for i in range(len(grads)):
-            self.velocity[i] = (
-                self.momentum * self.velocity[i] - self.learning_rate * grads[i]
-            )
-            if self.nesterov:
-                variables[i] += (
-                    self.momentum * self.velocity[i] - self.learning_rate * grads[i]
+            if self.momentumsomentum > 0:
+                if self.velocitieselocity is None:
+                    self.velocitieselocity = [np.zeros_like(v) for v in variables]
+                self.velocitieselocity[i] = (
+                    self.momentumsomentum * self.velocitieselocity[i]
+                    - self.learning_rate * grads[i]
                 )
+                if self.nesterov:
+                    variables[i] += self.momentumsomentum * self.velocitieselocity[i]
+                else:
+                    variables[i] += self.velocitieselocity[i]
             else:
-                variables[i] += self.velocity[i]
-
+                variables[i] -= self.learning_rate * grads[i]
         return variables
 
+    def reset(self):
+        self.velocitieselocity = None
 
-""" class RMSprop(Optimizer):
+
+class RMSprop(Optimizer):
     def __init__(self, learning_rate=0.001, rho=0.9, epsilon=1e-7):
         super().__init__(learning_rate)
         self.rho = rho
         self.epsilon = epsilon
-        self.cache = {}
+        self.cache = None
 
     def _aggregate_gradients(self, grads, variables):
-        if self.iterations == 0:
-            self.cache = [np.zeros_like(v) for _, v in grads, variables]
-        agg_grads_var = []
-        for i, (g, v) in enumerate(grads, variables):
-            self.cache[i] = self.rho * self.cache[i] + (1 - self.rho) * g**2
-            agg_grads_var.append(g / (np.sqrt(self.cache[i]) + self.epsilon), v)
-        return agg_grads_var
+        if not self.cache:
+            self.cache = [np.zeros_like(v) for v in variables]
+        for i in range(len(grads)):
+            self.cache[i] = self.rho * self.cache[i] + (1 - self.rho) * grads[i] ** 2
+            grads[i] /= np.sqrt(self.cache[i] + self.epsilon)
+        return grads, variables
 
     def _apply_gradients(self, grads, variables):
-        for g, v in grads, variables:
-            v -= self.learning_rate * g
+        for i in range(len(grads)):
+            variables[i] -= self.learning_rate * grads[i]
+        return variables
+
+    def reset(self):
+        self.cache = None
 
 
 class Adam(Optimizer):
@@ -78,36 +87,50 @@ class Adam(Optimizer):
         self.beta1 = beta1
         self.beta2 = beta2
         self.epsilon = epsilon
-        self.m = None
-        self.v = None
-        self.t = 0
+        self.momentums = None
+        self.velocities = None
+        self.timestep = 0
 
     def _aggregate_gradients(self, grads, variables):
-        if self.m is None:
-            self.m = [np.zeros_like(v) for _, v in grads, variables]
-        if self.v is None:
-            self.v = [np.zeros_like(v) for _, v in grads, variables]
+        if self.momentums is None:
+            self.momentums = [np.zeros_like(v) for v in variables]
+            self.velocities = [np.zeros_like(v) for v in variables]
 
-        self.t += 1
-        learning_rate_t = (
-            self.learning_rate
-            * np.sqrt(1 - self.beta2**self.t)
-            / (1 - self.beta1**self.t)
-        )
+        for i in range(len(grads)):
+            self.momentums[i] = (
+                self.beta1 * self.momentums[i] + (1 - self.beta1) * grads[i]
+            )
+            self.velocities[i] = (
+                self.beta2 * self.velocities[i] + (1 - self.beta2) * grads[i] ** 2
+            )
 
-        agg_grads_var = []
-        for i, (g, v) in enumerate(grads, variables):
-            self.m[i] = self.beta1 * self.m[i] + (1 - self.beta1) * g
-            self.v[i] = self.beta2 * self.v[i] + (1 - self.beta2) * g**2
-            v -= learning_rate_t * self.m[i] / (np.sqrt(self.v[i]) + self.epsilon)
-            agg_grads_var.append((g, v))
-        return agg_grads_var
+        return grads, variables
 
     def _apply_gradients(self, grads, variables):
-        for g, v in grads, variables:
-            v -= g """
+        self.timestep += 1
+        learning_rate = (
+            self.learning_rate
+            * np.sqrt(1 - self.beta2**self.timestep)
+            / (1 - self.beta1**self.timestep)
+        )
+
+        for i in range(len(grads)):
+            variables[i] -= (
+                learning_rate
+                * self.momentums[i]
+                / (np.sqrt(self.velocities[i]) + self.epsilon)
+            )
+
+        return variables
+
+    def reset(self):
+        self.momentums = None
+        self.velocities = None
+        self.timestep = 0
 
 
 OPTIMIZERS = {
-    "sgd": SGD(),
+    "sgd": SGD,
+    "rmsprop": RMSprop,
+    "adam": Adam,
 }

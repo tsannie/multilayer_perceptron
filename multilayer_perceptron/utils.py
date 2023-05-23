@@ -9,8 +9,16 @@ def check_arguments(valid_options):
                         )
                     )
                 argument = valid_options[argument]
-            elif not callable(argument):
-                raise ValueError("Invalid argument. ")
+                argument = argument()
+            else:
+                is_valid = False
+                for _, v in valid_options.items():
+                    if isinstance(argument, v):
+                        is_valid = True
+                        break
+                if not is_valid:
+                    raise TypeError("Invalid argument type.")
+
             return func(self, argument)
 
         return wrapper

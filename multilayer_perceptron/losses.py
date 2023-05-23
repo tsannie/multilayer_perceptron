@@ -44,6 +44,6 @@ class MeanSquaredError(Loss):
 
 
 LOSSES = {
-    "binary_crossentropy": BinaryCrossentropy(),
-    "mean_squared_error": MeanSquaredError(),
+    "binary_crossentropy": BinaryCrossentropy,
+    "mean_squared_error": MeanSquaredError,
 }

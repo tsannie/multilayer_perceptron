@@ -99,12 +99,12 @@ class Exponential(Activation):
 
 
 ACTIVATION_FUNCTIONS = {
-    "linear": Linear(),
-    "relu": ReLU(),
-    "sigmoid": Sigmoid(),
-    "softmax": Softmax(),
-    "softplus": Softplus(),
-    "softsign": Softsign(),
-    "tanh": Tanh(),
-    "exponential": Exponential(),
+    "linear": Linear,
+    "relu": ReLU,
+    "sigmoid": Sigmoid,
+    "softmax": Softmax,
+    "softplus": Softplus,
+    "softsign": Softsign,
+    "tanh": Tanh,
+    "exponential": Exponential,
 }

@@ -4,6 +4,7 @@ import matplotlib.pyplot as plt
 
 from multilayer_perceptron.dense_layer import Dense
 from multilayer_perceptron.sequential import Sequential
+from multilayer_perceptron.optimizers import SGD, RMSprop, Adam
 
 # from tensorflow.keras.models import Sequential
 # from tensorflow.keras.layers import Dense
@@ -56,9 +57,12 @@ if __name__ == "__main__":
     model.add(Dense(24, activation="sigmoid"))
     model.add(Dense(2, activation="softmax"))
 
+    # optimizer = SGD(learning_rate=0.01, momentum=0.9, nesterov=True)
+    optimizer = Adam()
+
     model.compile(
         loss="binary_crossentropy",
-        optimizer="sgd",
+        optimizer=optimizer,
         metrics=["accuracy", "binary_accuracy"],
     )
     # model.summary()
@@ -67,6 +71,7 @@ if __name__ == "__main__":
         y,
         batch_size=8,
         epochs=84,
+        # callbacks=["early_stopping"],
     )
 
     df_test = pd.read_csv("./data/data_test.csv", header=None)

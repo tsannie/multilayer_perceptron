@@ -14,6 +14,8 @@ class Sequential:
         self.loss = None
         self.optimizer = None
         self.compiled = False
+        self.stop_training = False
+        self.history = []
 
     def add(self, layer):
         if not isinstance(layer, dense_layer.Dense):
@@ -43,7 +45,6 @@ class Sequential:
         for metric in metrics:
             set_metrics(self, metric)
 
-        # Initialize all layers
         for layer in range(len(self.layers)):
             if layer == 0:
                 self.layers[layer].initialize(self.layers[layer].input_dim)
@@ -52,7 +53,7 @@ class Sequential:
 
         self.compiled = True
 
-    def fit(self, x=None, y=None, batch_size=None, epochs=1):
+    def fit(self, x=None, y=None, batch_size=None, epochs=1, callbacks=None):
         if not self.compiled:
             raise RuntimeError("Model must be compiled before fitting.")
 
@@ -68,12 +69,22 @@ class Sequential:
         if batch_size is None:
             batch_size = x.shape[0]
 
-        print("Batch size: {}".format(batch_size))
+        if callbacks is None:
+            callbacks = []
+
+        for callback in callbacks:
+            callback.set_model(self)
 
         for epoch in range(epochs):
+            if self.stop_training:
+                break
             total_loss = 0
+
+            for callback in callbacks:
+                callback.on_epoch_begin(epoch)
             for metric in self.metrics:
                 metric.reset_state()
+
             for i in range(0, x.shape[0], batch_size):
                 x_batch = x[i : i + batch_size]
                 y_batch = y[i : i + batch_size]
@@ -92,6 +103,7 @@ class Sequential:
                         layer.dW, layer.weights
                     )
                     layer.bias = self.optimizer.apply_gradients(layer.dB, layer.bias)
+                    self.optimizer.reset()
 
                 for metric in self.metrics:
                     metric.update_state(y_batch, output)
@@ -102,6 +114,8 @@ class Sequential:
                 for metric in self.metrics:
                     metrics[metric.name] = "{:.4f}".format(metric.result())
 
+                for callback in callbacks:
+                    callback.on_epoch_end(epoch, metrics)
                 # compute accuracy with sklearn
                 from sklearn.metrics import accuracy_score
 
@@ -122,7 +136,12 @@ class Sequential:
                     end="\r",
                 )
 
+            self.history.append({"loss": training_loss})
+            self.history.append(metrics)
+
             print()
+
+        return self.history
 
     def evaluate(self, x=None, y=None, batch_size=None):
         if x is None or y is None:

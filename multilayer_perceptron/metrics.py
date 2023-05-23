@@ -52,6 +52,6 @@ class BinaryAccuracy(MeanMetric):
 
 
 METRICS = {
-    "accuracy": Accuracy(),
-    "binary_accuracy": BinaryAccuracy(),
+    "accuracy": Accuracy,
+    "binary_accuracy": BinaryAccuracy,
 }
