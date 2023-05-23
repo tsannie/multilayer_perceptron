@@ -51,12 +51,10 @@ if __name__ == "__main__":
 
     model = Sequential()
     model.add(Dense(2, input_dim=X.shape[1], activation="sigmoid"))
-    model.add(Dense(16, activation="sigmoid"))
-    model.add(Dense(32, activation="tanh"))
-    model.add(Dense(16, activation="sigmoid"))
-    model.add(Dense(2, activation="sigmoid"))
-    # model.add(Dense(16, activation="relu"))
-    # model.add(Dense(2, activation="sigmoid"))
+    model.add(Dense(24, activation="sigmoid"))
+    model.add(Dense(42, activation="sigmoid"))
+    model.add(Dense(24, activation="sigmoid"))
+    model.add(Dense(2, activation="softmax"))
 
     model.compile(
         loss="binary_crossentropy",
@@ -67,8 +65,8 @@ if __name__ == "__main__":
     history = model.fit(
         X,
         y,
-        batch_size=10,
-        epochs=100,
+        batch_size=8,
+        epochs=84,
     )
 
     df_test = pd.read_csv("./data/data_test.csv", header=None)
