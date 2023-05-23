@@ -102,16 +102,22 @@ class Sequential:
                 for metric in self.metrics:
                     metrics[metric.name] = "{:.4f}".format(metric.result())
 
+                # compute accuracy with sklearn
+                from sklearn.metrics import accuracy_score
+
                 total_loss += self.loss(y_batch, output)
                 training_loss = total_loss / (i + 1)
                 print(
-                    "Loss: {:.4f} - Epoch: {}/{} - Batch: {}/{}, metrics: {}".format(
+                    "Loss: {:.4f} - Epoch: {}/{} - Batch: {}/{}, metrics: {}, sk_accuracy: {}".format(
                         training_loss,
                         epoch + 1,
                         epochs,
                         i + batch_size,
                         x.shape[0],
                         metrics,
+                        accuracy_score(
+                            np.argmax(y_batch, axis=1), np.argmax(output, axis=1)
+                        ),
                     ),
                     end="\r",
                 )

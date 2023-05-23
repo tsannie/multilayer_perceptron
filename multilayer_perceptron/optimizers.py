@@ -24,15 +24,29 @@ class Optimizer:
 
 
 class SGD(Optimizer):
-    def __init__(self, learning_rate=0.01):
+    def __init__(self, learning_rate=0.01, momentum=0.0, nesterov=False):
         super().__init__(learning_rate)
+        self.momentum = momentum
+        self.nesterov = nesterov
+        self.velocity = None
 
     def _aggregate_gradients(self, grads, variables):
         return grads, variables
 
     def _apply_gradients(self, grads, variables):
+        if self.velocity is None:
+            self.velocity = [np.zeros_like(v) for v in variables]
+
         for i in range(len(grads)):
-            variables[i] -= self.learning_rate * grads[i]
+            self.velocity[i] = (
+                self.momentum * self.velocity[i] - self.learning_rate * grads[i]
+            )
+            if self.nesterov:
+                variables[i] += (
+                    self.momentum * self.velocity[i] - self.learning_rate * grads[i]
+                )
+            else:
+                variables[i] += self.velocity[i]
 
         return variables
 
