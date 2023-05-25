@@ -1,8 +1,9 @@
 from multilayer_perceptron import dense_layer
 from multilayer_perceptron import optimizers
-from multilayer_perceptron.utils import check_arguments
+from multilayer_perceptron.utils import check_arguments, History
 from multilayer_perceptron import losses
 from multilayer_perceptron import metrics as metrics_module
+from multilayer_perceptron import callbacks as callbacks_module
 
 import numpy as np
 
@@ -15,7 +16,8 @@ class Sequential:
         self.optimizer = None
         self.compiled = False
         self.stop_training = False
-        self.history = []
+        self.history = History()
+        self.callbacks = []
 
     def add(self, layer):
         if not isinstance(layer, dense_layer.Dense):
@@ -69,18 +71,20 @@ class Sequential:
         if batch_size is None:
             batch_size = x.shape[0]
 
-        if callbacks is None:
-            callbacks = []
+        @check_arguments(callbacks_module.CALLBACKS)
+        def set_callbacks(self, argument):
+            argument.set_model(self)
+            self.callbacks.append(argument)
 
         for callback in callbacks:
-            callback.set_model(self)
+            set_callbacks(self, callback)
 
         for epoch in range(epochs):
             if self.stop_training:
                 break
             total_loss = 0
 
-            for callback in callbacks:
+            for callback in self.callbacks:
                 callback.on_epoch_begin(epoch)
             for metric in self.metrics:
                 metric.reset_state()
@@ -114,8 +118,6 @@ class Sequential:
                 for metric in self.metrics:
                     metrics[metric.name] = "{:.4f}".format(metric.result())
 
-                for callback in callbacks:
-                    callback.on_epoch_end(epoch, metrics)
                 # compute accuracy with sklearn
                 from sklearn.metrics import accuracy_score
 
@@ -136,8 +138,12 @@ class Sequential:
                     end="\r",
                 )
 
-            self.history.append({"loss": training_loss})
-            self.history.append(metrics)
+            self.history.append("loss", training_loss)
+            for metric in self.metrics:
+                self.history.append(metric.name, metric.result())
+
+            for callback in self.callbacks:
+                callback.on_epoch_end(epoch, self.history.history)
 
             print()
 

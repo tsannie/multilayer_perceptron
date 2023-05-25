@@ -4,10 +4,13 @@ import matplotlib.pyplot as plt
 
 from multilayer_perceptron.dense_layer import Dense
 from multilayer_perceptron.sequential import Sequential
-from multilayer_perceptron.optimizers import SGD, RMSprop, Adam
+from multilayer_perceptron.callbacks import EarlyStopping
+
+# from multilayer_perceptron.optimizers import SGD, RMSprop, Adam
 
 # from tensorflow.keras.models import Sequential
 # from tensorflow.keras.layers import Dense
+# from tensorflow.keras.callbacks import EarlyStopping
 
 file_name = "./data/data.csv"
 
@@ -58,20 +61,21 @@ if __name__ == "__main__":
     model.add(Dense(2, activation="softmax"))
 
     # optimizer = SGD(learning_rate=0.01, momentum=0.9, nesterov=True)
-    optimizer = Adam()
+    # optimizer = Adam()
 
     model.compile(
         loss="binary_crossentropy",
-        optimizer=optimizer,
+        optimizer="adam",
         metrics=["accuracy", "binary_accuracy"],
     )
     # model.summary()
+    early_stopping = EarlyStopping(monitor="loss", patience=5, mode="min")
     history = model.fit(
         X,
         y,
         batch_size=8,
         epochs=84,
-        # callbacks=["early_stopping"],
+        callbacks=[early_stopping],
     )
 
     df_test = pd.read_csv("./data/data_test.csv", header=None)
@@ -93,7 +97,7 @@ if __name__ == "__main__":
     print("Test accuracy:", scores[1])
     print("Test binary_accuracy:", scores[2])
 
-    """ plt.plot(history.history["loss"])
+    plt.plot(history.history["loss"])
     plt.title("Model Loss")
     plt.ylabel("Loss")
     plt.xlabel("Epoch")
@@ -104,4 +108,4 @@ if __name__ == "__main__":
     plt.title("Model Accuracy")
     plt.ylabel("Accuracy")
     plt.xlabel("Epoch")
-    plt.show() """
+    plt.show()

@@ -24,3 +24,13 @@ def check_arguments(valid_options):
         return wrapper
 
     return decorator
+
+
+class History:
+    def __init__(self):
+        self.history = {}
+
+    def append(self, key, value):
+        if key not in self.history:
+            self.history[key] = []
+        self.history[key].append(value)
