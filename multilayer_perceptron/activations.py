@@ -2,6 +2,9 @@ import numpy as np
 
 
 class Activation:
+    def __init__(self, name):
+        self.name = name
+
     def __call__(self, x, derivative=False):
         if derivative:
             return self.derivative(x)
@@ -18,6 +21,9 @@ class Activation:
 class Linear(Activation):
     """Linear activation activate. range (-inf, inf)"""
 
+    def __init__(self):
+        super().__init__("linear")
+
     def activate(self, x):
         return x
 
@@ -27,6 +33,9 @@ class Linear(Activation):
 
 class ReLU(Activation):
     """ReLU activation activate. range [0, inf)"""
+
+    def __init__(self):
+        super().__init__("relu")
 
     def activate(self, x):
         return np.maximum(0, x)
@@ -38,6 +47,9 @@ class ReLU(Activation):
 class Sigmoid(Activation):
     """Sigmoid activation activate. range [0, 1]"""
 
+    def __init__(self):
+        super().__init__("sigmoid")
+
     def activate(self, x):
         return 1 / (1 + np.exp(-x))
 
@@ -47,6 +59,9 @@ class Sigmoid(Activation):
 
 class Softmax(Activation):
     """Softmax activation activate. range [0, 1]"""
+
+    def __init__(self):
+        super().__init__("softmax")
 
     def activate(self, x):
         reduce_sum = np.sum(np.exp(x), axis=-1, keepdims=True)
@@ -59,6 +74,9 @@ class Softmax(Activation):
 class Softplus(Activation):
     """Softplus activation activate. range [0, inf)"""
 
+    def __init__(self):
+        super().__init__("softplus")
+
     def activate(self, x):
         return np.log(1 + np.exp(x))
 
@@ -69,6 +87,9 @@ class Softplus(Activation):
 class Softsign(Activation):
     """Softsign activation activate. range [-1, 1]"""
 
+    def __init__(self):
+        super().__init__("softsign")
+
     def activate(self, x):
         return x / (1 + np.abs(x))
 
@@ -78,6 +99,9 @@ class Softsign(Activation):
 
 class Tanh(Activation):
     """Tanh activation activate. range [-1, 1]"""
+
+    def __init__(self):
+        super().__init__("tanh")
 
     def activate(self, x):
         sinh = np.exp(x) - np.exp(-x)
@@ -90,6 +114,9 @@ class Tanh(Activation):
 
 class Exponential(Activation):
     """Exponential activation activate. range [0, inf)"""
+
+    def __init__(self):
+        super().__init__("exponential")
 
     def activate(self, x):
         return np.exp(x)

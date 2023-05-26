@@ -44,8 +44,9 @@ class Sequential:
         set_optimizer(self, optimizer)
         set_loss(self, loss)
 
-        for metric in metrics:
-            set_metrics(self, metric)
+        if metrics is not None:
+            for metric in metrics:
+                set_metrics(self, metric)
 
         for layer in range(len(self.layers)):
             if layer == 0:
@@ -76,8 +77,9 @@ class Sequential:
             argument.set_model(self)
             self.callbacks.append(argument)
 
-        for callback in callbacks:
-            set_callbacks(self, callback)
+        if callbacks is not None:
+            for callback in callbacks:
+                set_callbacks(self, callback)
 
         for epoch in range(epochs):
             if self.stop_training:
@@ -184,3 +186,64 @@ class Sequential:
             scores.append(metric.result())
 
         return scores
+
+    def predict(self, x=None, batch_size=None):
+        if x is None:
+            raise ValueError("x must be specified for prediction.")
+
+        if batch_size is None:
+            batch_size = x.shape[0]
+
+        predictions = []
+
+        for i in range(0, x.shape[0], batch_size):
+            x_batch = x[i : i + batch_size]
+
+            output = x_batch
+            for layer in self.layers:
+                output = layer.forward(output)
+
+            predictions.append(output)
+
+        return np.concatenate(predictions)
+
+    def save(self, path):
+        # save the network topology
+        import json
+
+        topology = {
+            "network_type": "multilayer_perceptron",
+            "n_layers": len(self.layers),
+            "optimizer": self.optimizer.name,
+            "loss": self.loss.name,
+        }
+
+        layers_config = []
+        for layer in self.layers:
+            type_layer = "hidden"
+            if layer.input_dim is not None:
+                type_layer = "input"
+            if layer == self.layers[-1]:
+                type_layer = "output"
+            layers_config.append(
+                {
+                    "type": type_layer,
+                    "n_neurons": layer.n_neurons,
+                    "activation": layer.activation.name,
+                }
+            )
+            if layer.input_dim is not None:
+                layers_config[-1]["input_dim"] = layer.input_dim
+
+        topology["layers"] = layers_config
+
+        weights = []
+        biases = []
+        for layer in self.layers:
+            weights.append(layer.weights.tolist())
+            biases.append(layer.bias.tolist())
+        topology["weights"] = weights
+        topology["biases"] = biases
+
+        with open(path, "w") as f:
+            json.dump(topology, f, indent=4)

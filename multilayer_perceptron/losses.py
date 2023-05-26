@@ -2,6 +2,9 @@ import numpy as np
 
 
 class Loss:
+    def __init__(self, name):
+        self.name = name
+
     def __call__(self, y_true, y_pred):
         return self.call(y_true, y_pred)
 
@@ -17,6 +20,7 @@ class Loss:
 
 class BinaryCrossentropy(Loss):
     def __init__(self, from_logits=False, epsilon=1e-7):
+        super().__init__("binary_crossentropy")
         self.from_logits = from_logits
         self.epsilon = epsilon
 
@@ -36,8 +40,11 @@ class BinaryCrossentropy(Loss):
 
 
 class MeanSquaredError(Loss):
+    def __init__(self):
+        super().__init__("mean_squared_error")
+
     def call(self, y_true, y_pred):
-        return np.mean(np.sum(np.square(y_true - y_pred), axis=1))
+        return np.mean(np.sum(np.square(y_pred - y_true), axis=1))
 
     def derivative(self, y_true, y_pred):
         return 2 * (y_pred - y_true)

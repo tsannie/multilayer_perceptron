@@ -2,8 +2,9 @@ import numpy as np
 
 
 class Optimizer:
-    def __init__(self, learning_rate=0.01):
+    def __init__(self, learning_rate=0.01, name=None):
         self.learning_rate = learning_rate
+        self.name = name
 
     def apply_gradients(self, grads, variables):
         if len(grads) != len(variables):
@@ -28,38 +29,40 @@ class Optimizer:
 
 class SGD(Optimizer):
     def __init__(self, learning_rate=0.01, momentum=0.0, nesterov=False):
-        super().__init__(learning_rate)
-        self.momentumsomentum = momentum
+        super().__init__(learning_rate, "sgd")
+        self.momentum = momentum
         self.nesterov = nesterov
-        self.velocitieselocity = None
+        self.velocities = None
 
     def _aggregate_gradients(self, grads, variables):
         return grads, variables
 
     def _apply_gradients(self, grads, variables):
         for i in range(len(grads)):
-            if self.momentumsomentum > 0:
-                if self.velocitieselocity is None:
-                    self.velocitieselocity = [np.zeros_like(v) for v in variables]
-                self.velocitieselocity[i] = (
-                    self.momentumsomentum * self.velocitieselocity[i]
-                    - self.learning_rate * grads[i]
+            if self.momentum > 0:
+                if self.velocities is None:
+                    self.velocities = [np.zeros_like(v) for v in variables]
+                self.velocities[i] = (
+                    self.momentum * self.velocities[i] - self.learning_rate * grads[i]
                 )
                 if self.nesterov:
-                    variables[i] += self.momentumsomentum * self.velocitieselocity[i]
+                    variables[i] += (
+                        self.momentum * self.velocities[i]
+                        - self.learning_rate * grads[i]
+                    )
                 else:
-                    variables[i] += self.velocitieselocity[i]
+                    variables[i] += self.velocities[i]
             else:
                 variables[i] -= self.learning_rate * grads[i]
         return variables
 
     def reset(self):
-        self.velocitieselocity = None
+        self.velocities = None
 
 
 class RMSprop(Optimizer):
     def __init__(self, learning_rate=0.001, rho=0.9, epsilon=1e-7):
-        super().__init__(learning_rate)
+        super().__init__(learning_rate, "rmsprop")
         self.rho = rho
         self.epsilon = epsilon
         self.cache = None
@@ -83,7 +86,7 @@ class RMSprop(Optimizer):
 
 class Adam(Optimizer):
     def __init__(self, learning_rate=0.001, beta1=0.9, beta2=0.999, epsilon=1e-7):
-        super().__init__(learning_rate)
+        super().__init__(learning_rate, "adam")
         self.beta1 = beta1
         self.beta2 = beta2
         self.epsilon = epsilon

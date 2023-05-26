@@ -14,11 +14,12 @@ class Initializer:
 class RandomNormal(Initializer):
     """Random normal distribution"""
 
-    def __init__(self, mean=0.0, stddev=0.05, seed=None):
+    def __init__(self, mean=0.0, stddev=0.05, seed=None, name=None):
         self.mean = mean
         self.stddev = stddev
         self.seed = seed
         self.rng = np.random.default_rng(seed=seed)
+        self.name = name
 
     def __call__(self, shape):
         return self.rng.normal(loc=self.mean, scale=self.stddev, size=shape)
