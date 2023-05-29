@@ -1,11 +1,13 @@
 from multilayer_perceptron import dense_layer
 from multilayer_perceptron import optimizers
-from multilayer_perceptron.utils import check_arguments, History
+from multilayer_perceptron.utils import check_arguments, History, shuffle_dataset
 from multilayer_perceptron import losses
 from multilayer_perceptron import metrics as metrics_module
 from multilayer_perceptron import callbacks as callbacks_module
 
+
 import numpy as np
+from tqdm import tqdm
 
 
 class Sequential:
@@ -54,6 +56,10 @@ class Sequential:
             else:
                 self.layers[layer].initialize(self.layers[layer - 1].n_neurons)
 
+        self.history.append("loss", 0)
+        for metric in self.metrics:
+            self.history.append(metric.name, 0)
+
         self.compiled = True
 
     def fit(self, x=None, y=None, batch_size=None, epochs=1, callbacks=None):
@@ -91,7 +97,18 @@ class Sequential:
             for metric in self.metrics:
                 metric.reset_state()
 
-            for i in range(0, x.shape[0], batch_size):
+            metrics_format = ""
+            # browse self.history.history to get all metrics
+            for history in self.history.history:
+                metrics_format += "{}: {:.4f} - ".format(
+                    history, self.history.history[history][-1]
+                )
+
+            print("Epoch {}/{}".format(epoch + 1, epochs))
+            for i in tqdm(
+                range(0, x.shape[0], batch_size),
+                desc=metrics_format,
+            ):
                 x_batch = x[i : i + batch_size]
                 y_batch = y[i : i + batch_size]
 
@@ -115,30 +132,9 @@ class Sequential:
                     metric.update_state(y_batch, output)
 
                 # compute loss
-                metrics = {}
-
-                for metric in self.metrics:
-                    metrics[metric.name] = "{:.4f}".format(metric.result())
-
-                # compute accuracy with sklearn
-                from sklearn.metrics import accuracy_score
 
                 total_loss += self.loss(y_batch, output)
-                training_loss = total_loss / (i + 1)
-                print(
-                    "Loss: {:.4f} - Epoch: {}/{} - Batch: {}/{}, metrics: {}, sk_accuracy: {}".format(
-                        training_loss,
-                        epoch + 1,
-                        epochs,
-                        i + batch_size,
-                        x.shape[0],
-                        metrics,
-                        accuracy_score(
-                            np.argmax(y_batch, axis=1), np.argmax(output, axis=1)
-                        ),
-                    ),
-                    end="\r",
-                )
+                training_loss = total_loss / (i + batch_size)
 
             self.history.append("loss", training_loss)
             for metric in self.metrics:

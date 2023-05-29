@@ -19,7 +19,7 @@ class EarlyStopping(Callback):
     def __init__(self, monitor="loss", patience=0, mode="min"):
         super().__init__()
         if mode not in ["min", "max"]:
-            raise ValueError("mode must be either auto, min, or max.")
+            raise ValueError("mode must be either min, or max.")
         self.mode = mode
         self.patience = patience
         self.monitor = monitor
