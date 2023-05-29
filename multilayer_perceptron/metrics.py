@@ -91,9 +91,18 @@ class BinaryAccuracy(MeanMetric):
         super().update_state(np.mean(y_true == y_pred))
 
 
+class MeanSquaredError(MeanMetric):
+    def __init__(self):
+        super().__init__("mse")
+
+    def update_state(self, y_true, y_pred):
+        super().update_state(np.mean(np.square(y_pred - y_true)))
+
+
 METRICS = {
     "accuracy": Accuracy,
     "binary_accuracy": BinaryAccuracy,
     "precision": Precision,
     "recall": Recall,
+    "mse": MeanSquaredError,
 }

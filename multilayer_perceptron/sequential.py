@@ -56,9 +56,10 @@ class Sequential:
             else:
                 self.layers[layer].initialize(self.layers[layer - 1].n_neurons)
 
-        self.history.append("loss", 0)
+        # init elements of history
+        self.history.append("loss")
         for metric in self.metrics:
-            self.history.append(metric.name, 0)
+            self.history.append(metric.name)
 
         self.compiled = True
 
@@ -91,6 +92,7 @@ class Sequential:
             if self.stop_training:
                 break
             total_loss = 0
+            total_samples = 0
 
             for callback in self.callbacks:
                 callback.on_epoch_begin(epoch)
@@ -98,10 +100,12 @@ class Sequential:
                 metric.reset_state()
 
             metrics_format = ""
-            # browse self.history.history to get all metrics
             for history in self.history.history:
                 metrics_format += "{}: {:.4f} - ".format(
-                    history, self.history.history[history][-1]
+                    history,
+                    0
+                    if len(self.history.history[history]) == 0
+                    else self.history.history[history][-1],
                 )
 
             print("Epoch {}/{}".format(epoch + 1, epochs))
@@ -131,10 +135,9 @@ class Sequential:
                 for metric in self.metrics:
                     metric.update_state(y_batch, output)
 
-                # compute loss
-
                 total_loss += self.loss(y_batch, output)
-                training_loss = total_loss / (i + batch_size)
+                total_samples += x_batch.shape[0]
+                training_loss = total_loss / total_samples
 
             self.history.append("loss", training_loss)
             for metric in self.metrics:

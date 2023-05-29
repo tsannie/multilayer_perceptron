@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def check_arguments(valid_options):
     def decorator(func):
         def wrapper(self, argument):
@@ -32,10 +33,12 @@ class History:
     def __init__(self):
         self.history = {}
 
-    def append(self, key, value):
+    def append(self, key, value=None):
         if key not in self.history:
             self.history[key] = []
-        self.history[key].append(value)
+        if value is not None:
+            self.history[key].append(value)
+
 
 def shuffle_dataset(X, y):
     indices = np.arange(X.shape[0])

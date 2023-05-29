@@ -36,28 +36,45 @@ def standardize(X):
     return X
 
 
-def train_model(X, y, graph):
+def train_model(X, y, graph=False):
     print("Training model most suitable for the dataset")
 
     model = Sequential()
     model.add(Dense(2, input_dim=X.shape[1], activation="sigmoid"))
     model.add(Dense(24, activation="sigmoid", kernel_initializer="he_uniform"))
+    model.add(Dense(32, activation="tanh", kernel_initializer="he_uniform"))
     model.add(Dense(42, activation="sigmoid", kernel_initializer="he_uniform"))
+    model.add(Dense(32, activation="tanh", kernel_initializer="he_uniform"))
     model.add(Dense(24, activation="sigmoid", kernel_initializer="he_uniform"))
     model.add(Dense(2, activation="softmax", kernel_initializer="he_uniform"))
 
     model.compile(
         loss="binary_crossentropy",
         optimizer=Adam(),
-        metrics=["accuracy", "binary_accuracy", "precision", "recall"],
+        metrics=["binary_accuracy", "mse", "precision"],
     )
 
-    early_stopping = EarlyStopping(monitor="loss", patience=5, mode="min")
+    early_stopping = EarlyStopping(monitor="loss", patience=3, mode="min")
     history = model.fit(X, y, batch_size=8, epochs=64, callbacks=[early_stopping])
 
     if graph:
-        # TODO plot the graph
-        pass
+        # compute the number of metrics
+        metrics = history.history.keys()
+        n_metrics = len(metrics)
+
+        # Créer un subplot pour chaque métrique
+        fig, axs = plt.subplots(n_metrics, 1, figsize=(8, 6 * n_metrics))
+        fig.subplots_adjust(hspace=0.5)
+
+        # Parcourir toutes les métriques et les afficher sur des graphiques séparés
+        for i, metric in enumerate(metrics):
+            ax = axs[i]
+            ax.plot(history.history[metric])
+            ax.set_title(metric)
+            ax.set_xlabel("Époque")
+            ax.set_ylabel(metric)
+
+        plt.show()
 
     model.save("./data/model.json")
 
@@ -78,7 +95,7 @@ def train_optimizer(X, y, optimizer):
         metrics=["accuracy", "binary_accuracy", "precision", "recall"],
     )
 
-    history = model.fit(X, y, batch_size=8, epochs=64)
+    history = model.fit(X, y, batch_size=8, epochs=42)
 
     return history
 
@@ -128,6 +145,9 @@ if __name__ == "__main__":
         default=False,
         action="store_true",
     )
+    parser.add_argument(
+        "-g", "--graph", help="Display graph", default=False, action="store_true"
+    )
 
     args = parser.parse_args()
 
@@ -139,5 +159,5 @@ if __name__ == "__main__":
 
     if args.optimizer:
         test_all_optimizers(X, y)
-
-    train_model(X, y, graph=True)
+    else:
+        train_model(X, y, args.graph)
