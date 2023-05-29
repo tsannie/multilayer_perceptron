@@ -3,37 +3,22 @@ import numpy as np
 import argparse
 import matplotlib.pyplot as plt
 
+from multilayer_perceptron.utils import (
+    one_hot_encoding,
+    standardize,
+    shuffle_dataset,
+    split_dataset,
+)
 from multilayer_perceptron.dense_layer import Dense
 from multilayer_perceptron.sequential import Sequential
 from multilayer_perceptron.callbacks import EarlyStopping
 from multilayer_perceptron.optimizers import SGD, RMSprop, Adam
-from multilayer_perceptron.initializers import HeUniform
 
 # from tensorflow.keras.models import Sequential
 # from tensorflow.keras.layers import Dense
 # from tensorflow.keras.callbacks import EarlyStopping
 
 file_name = "./data/data.csv"
-
-
-def one_hot_encoding(y):
-    """One hot encoding for y"""
-
-    n_classes = len(np.unique(y))
-    classes = np.unique(y)
-    one_hot = np.zeros((y.shape[0], n_classes))
-    for i, c in enumerate(classes):
-        idx = np.where(y == c)
-        one_hot[idx, i] = 1
-
-    return one_hot
-
-
-def standardize(X):
-    """Standardize the dataset X"""
-
-    X = (X - np.mean(X, axis=0)) / np.std(X, axis=0)
-    return X
 
 
 def train_model(X, y, graph=False):
@@ -55,24 +40,23 @@ def train_model(X, y, graph=False):
     )
 
     early_stopping = EarlyStopping(monitor="loss", patience=3, mode="min")
-    history = model.fit(X, y, batch_size=8, epochs=64, callbacks=[early_stopping])
+    history = model.fit(
+        X, y, batch_size=8, epochs=64, callbacks=[early_stopping], validation_split=0.2
+    )
 
     if graph:
-        # compute the number of metrics
         metrics = history.history.keys()
         n_metrics = len(metrics)
 
-        # Créer un subplot pour chaque métrique
         fig, axs = plt.subplots(n_metrics, 1, figsize=(8, 6 * n_metrics))
         fig.subplots_adjust(hspace=0.5)
 
-        # Parcourir toutes les métriques et les afficher sur des graphiques séparés
-        for i, metric in enumerate(metrics):
+        for i, metric_name in enumerate(metrics):
             ax = axs[i]
-            ax.plot(history.history[metric])
-            ax.set_title(metric)
-            ax.set_xlabel("Époque")
-            ax.set_ylabel(metric)
+            ax.plot(history.history[metric_name])
+            ax.set_title(metric_name)
+            ax.set_xlabel("Epochs")
+            ax.set_ylabel(metric_name)
 
         plt.show()
 

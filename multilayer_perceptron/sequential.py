@@ -1,6 +1,11 @@
 from multilayer_perceptron import dense_layer
 from multilayer_perceptron import optimizers
-from multilayer_perceptron.utils import check_arguments, History, shuffle_dataset
+from multilayer_perceptron.utils import (
+    check_arguments,
+    History,
+    shuffle_dataset,
+    split_dataset,
+)
 from multilayer_perceptron import losses
 from multilayer_perceptron import metrics as metrics_module
 from multilayer_perceptron import callbacks as callbacks_module
@@ -20,6 +25,7 @@ class Sequential:
         self.stop_training = False
         self.history = History()
         self.callbacks = []
+        self.metrics_test = []
 
     def add(self, layer):
         if not isinstance(layer, dense_layer.Dense):
@@ -63,7 +69,15 @@ class Sequential:
 
         self.compiled = True
 
-    def fit(self, x=None, y=None, batch_size=None, epochs=1, callbacks=None):
+    def fit(
+        self,
+        x=None,
+        y=None,
+        batch_size=None,
+        epochs=1,
+        callbacks=None,
+        validation_split=0.0,
+    ):
         if not self.compiled:
             raise RuntimeError("Model must be compiled before fitting.")
 
@@ -75,6 +89,9 @@ class Sequential:
 
         if x is None or y is None:
             raise ValueError("x and y must be specified for fitting.")
+
+        if validation_split < 0 or validation_split > 1:
+            raise ValueError("Validation split must be between 0 and 1.")
 
         if batch_size is None:
             batch_size = x.shape[0]
@@ -88,6 +105,18 @@ class Sequential:
             for callback in callbacks:
                 set_callbacks(self, callback)
 
+        if validation_split > 0:
+            x, y = shuffle_dataset(x, y)
+            x, y, x_val, y_val = split_dataset(x, y, ratio_train=(1 - validation_split))
+
+            # init metrics for validation in history
+            self.history.append("val_loss")
+            self.loss_test = self.loss
+            for metric in self.metrics:
+                self.history.append("val_" + metric.name)
+            for metric in self.metrics:
+                self.metrics_test.append(metric)
+
         for epoch in range(epochs):
             if self.stop_training:
                 break
@@ -95,8 +124,12 @@ class Sequential:
             total_samples = 0
 
             for callback in self.callbacks:
-                callback.on_epoch_begin(epoch)
+                callback.on_epoch_begin(epoch, self.history.history)
+
+            # reset metrics and metrics_test
             for metric in self.metrics:
+                metric.reset_state()
+            for metric in self.metrics_test:
                 metric.reset_state()
 
             metrics_format = ""
@@ -139,6 +172,14 @@ class Sequential:
                 total_samples += x_batch.shape[0]
                 training_loss = total_loss / total_samples
 
+            # test validation set
+            if x_val is not None:
+                scores = self.evaluate(x_val, y_val, batch_size)
+                for i, score in enumerate(scores):
+                    print("{}: {:.4f}".format(self.history.history[i], score))
+                    # self.history.history["val_" + self.history.history[i]] = score
+                exit()
+
             self.history.append("loss", training_loss)
             for metric in self.metrics:
                 self.history.append(metric.name, metric.result())
@@ -159,8 +200,6 @@ class Sequential:
 
         scores = []
         scores.append(0)
-
-        # TODO better gestion of batch_size
 
         for metric in self.metrics:
             metric.reset_state()

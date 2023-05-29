@@ -50,7 +50,7 @@ def train_model(X, y):
         metrics=["accuracy", "binary_accuracy"],
     )
 
-    history = model.fit(X, y, batch_size=8, epochs=40)
+    history = model.fit(X, y, batch_size=8, epochs=40, validation_split=0.2)
 
     with open("./data/data_test.csv", "r") as f:
         df_test = pd.read_csv(f, header=None)
