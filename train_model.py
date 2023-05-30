@@ -35,32 +35,38 @@ def train_model(X, y, graph=False):
 
     model.compile(
         loss="binary_crossentropy",
-        optimizer=Adam(),
+        optimizer=SGD(learning_rate=0.01, momentum=0.9),
         metrics=["binary_accuracy", "mse", "precision"],
     )
 
-    early_stopping = EarlyStopping(monitor="loss", patience=3, mode="min")
+    early_stopping = EarlyStopping(monitor="val_loss", patience=3, mode="min")
     history = model.fit(
         X, y, batch_size=8, epochs=64, callbacks=[early_stopping], validation_split=0.2
     )
 
     if graph:
         metrics = history.history.keys()
-        n_metrics = len(metrics)
 
-        fig, axs = plt.subplots(n_metrics, 1, figsize=(8, 6 * n_metrics))
-        fig.subplots_adjust(hspace=0.5)
+        metrics = history.history.keys()
+        num_rows = (len(metrics) + 1) // 2
 
-        for i, metric_name in enumerate(metrics):
-            ax = axs[i]
-            ax.plot(history.history[metric_name])
-            ax.set_title(metric_name)
-            ax.set_xlabel("Epochs")
-            ax.set_ylabel(metric_name)
+        fig, axs = plt.subplots(num_rows, figsize=(15, 6 * num_rows))
+        fig.tight_layout(pad=3.0)
+        fig.subplots_adjust(top=0.95)
+        fig.suptitle("Model metrics")
+
+        # Plot training & validation accuracy values on the same plot
+        for i, metric in enumerate(metrics):
+            if metric.startswith("val_"):
+                continue
+            axs[i].plot(history.history[metric])
+            axs[i].plot(history.history["val_" + metric])
+            axs[i].set_ylabel(metric)
+            axs[i].legend(["Train", "Validation"], loc="upper left")
 
         plt.show()
 
-    model.save("./data/model.json")
+        model.save("./data/model.json")
 
 
 def train_optimizer(X, y, optimizer):

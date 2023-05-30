@@ -25,7 +25,6 @@ class Sequential:
         self.stop_training = False
         self.history = History()
         self.callbacks = []
-        self.metrics_test = []
 
     def add(self, layer):
         if not isinstance(layer, dense_layer.Dense):
@@ -109,14 +108,6 @@ class Sequential:
             x, y = shuffle_dataset(x, y)
             x, y, x_val, y_val = split_dataset(x, y, ratio_train=(1 - validation_split))
 
-            # init metrics for validation in history
-            self.history.append("val_loss")
-            self.loss_test = self.loss
-            for metric in self.metrics:
-                self.history.append("val_" + metric.name)
-            for metric in self.metrics:
-                self.metrics_test.append(metric)
-
         for epoch in range(epochs):
             if self.stop_training:
                 break
@@ -126,10 +117,7 @@ class Sequential:
             for callback in self.callbacks:
                 callback.on_epoch_begin(epoch, self.history.history)
 
-            # reset metrics and metrics_test
             for metric in self.metrics:
-                metric.reset_state()
-            for metric in self.metrics_test:
                 metric.reset_state()
 
             metrics_format = ""
@@ -172,17 +160,15 @@ class Sequential:
                 total_samples += x_batch.shape[0]
                 training_loss = total_loss / total_samples
 
-            # test validation set
-            if x_val is not None:
-                scores = self.evaluate(x_val, y_val, batch_size)
-                for i, score in enumerate(scores):
-                    print("{}: {:.4f}".format(self.history.history[i], score))
-                    # self.history.history["val_" + self.history.history[i]] = score
-                exit()
-
             self.history.append("loss", training_loss)
             for metric in self.metrics:
                 self.history.append(metric.name, metric.result())
+
+            if x_val is not None:
+                scores = self.evaluate(x_val, y_val, batch_size)
+                self.history.append("val_loss", scores[0])
+                for i in range(1, len(scores)):
+                    self.history.append("val_" + self.metrics[i - 1].name, scores[i])
 
             for callback in self.callbacks:
                 callback.on_epoch_end(epoch, self.history.history)
@@ -204,7 +190,6 @@ class Sequential:
         for metric in self.metrics:
             metric.reset_state()
 
-        print("Batch size: {}".format(batch_size))
         for i in range(0, x.shape[0], batch_size):
             x_batch = x[i : i + batch_size]
             y_batch = y[i : i + batch_size]
@@ -212,16 +197,16 @@ class Sequential:
             output = x_batch
             for layer in self.layers:
                 output = layer.forward(output)
-            print("output {}".format(output[:5]))
 
             scores[0] += self.loss(y_batch, output)
 
             for metric in self.metrics:
-                print("y_batch {}".format(y_batch[:5]))
                 metric.update_state(y_batch, output)
 
         for metric in self.metrics:
             scores.append(metric.result())
+
+        scores[0] /= x.shape[0]
 
         return scores
 

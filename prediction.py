@@ -75,14 +75,8 @@ if __name__ == "__main__":
 
     # predictions on the dataset
     predictions = model.predict(X)
-
     predictions = np.round(predictions)
-    print("Predictions: ", predictions[:20])
-
     score = binary_cross_entropy(y, predictions)
-
     print("Binary cross entropy loss: ", score)
-
     accuracy = np.sum(np.argmax(predictions, axis=1) == np.argmax(y, axis=1)) / len(y)
-
     print("Accuracy: ", accuracy)
