@@ -7,35 +7,6 @@ default_file_path = "../data/dataset.csv"
 
 
 def histogram(df):
-    # 0 - 30
-    df = df.iloc[
-        :,
-        [
-            0,
-            1,
-            3,
-            4,
-            5,
-            6,
-            7,
-            8,
-            11,
-            13,
-            14,
-            16,
-            17,
-            18,
-            20,
-            21,
-            23,
-            24,
-            26,
-            27,
-            28,
-            30,
-        ],
-    ]
-
     header = ["diagnostic"]
     for i in range(1, len(df.columns)):
         header.append("param" + str(i))

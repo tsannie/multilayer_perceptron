@@ -109,8 +109,6 @@ class Sequential:
         for epoch in range(epochs):
             if self.stop_training:
                 break
-            total_loss = 0
-            total_samples = 0
 
             for callback in self.callbacks:
                 callback.on_epoch_begin(epoch, self.history.history)
@@ -126,6 +124,8 @@ class Sequential:
                     if len(self.history.history[history]) == 0
                     else self.history.history[history][-1],
                 )
+
+            x, y = shuffle_dataset(x, y)
 
             print("Epoch {}/{}".format(epoch + 1, epochs))
             for i in tqdm(
@@ -154,15 +154,12 @@ class Sequential:
                 for metric in self.metrics:
                     metric.update_state(y_batch, output)
 
-                total_loss += self.loss(y_batch, output)
-                total_samples += x_batch.shape[0]
-                training_loss = total_loss / total_samples
-
+            training_loss = self.loss(y, self.predict(x))
             self.history.append("loss", training_loss)
             for metric in self.metrics:
                 self.history.append(metric.name, metric.result())
 
-            if x_val is not None:
+            if validation_split > 0:
                 scores = self.evaluate(x_val, y_val, batch_size)
                 self.history.append("val_loss", scores[0])
                 for i in range(1, len(scores)):
@@ -183,28 +180,13 @@ class Sequential:
             batch_size = x.shape[0]
 
         scores = []
-        scores.append(0)
 
+        predictions = self.predict(x, batch_size)
+        scores.append(self.loss(y, predictions))
         for metric in self.metrics:
             metric.reset_state()
-
-        for i in range(0, x.shape[0], batch_size):
-            x_batch = x[i : i + batch_size]
-            y_batch = y[i : i + batch_size]
-
-            output = x_batch
-            for layer in self.layers:
-                output = layer.forward(output)
-
-            scores[0] += self.loss(y_batch, output)
-
-            for metric in self.metrics:
-                metric.update_state(y_batch, output)
-
-        for metric in self.metrics:
+            metric.update_state(y, predictions)
             scores.append(metric.result())
-
-        scores[0] /= x.shape[0]
 
         return scores
 

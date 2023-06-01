@@ -26,23 +26,23 @@ def train_model(X, y, graph=False):
     print("Training model most suitable for the dataset")
 
     model = Sequential()
-    model.add(Dense(4, input_dim=X.shape[1], activation="sigmoid"))
-    model.add(Dense(8, activation="tanh", kernel_initializer="random_uniform"))
+    model.add(Dense(32, input_dim=X.shape[1], activation="relu"))
+    model.add(Dense(256, activation="sigmoid"))
+    model.add(Dense(128, activation="sigmoid", kernel_initializer="he_uniform"))
+    model.add(Dense(128, activation="relu"))
     model.add(Dense(2, activation="softmax"))
 
-    loss = BinaryCrossentropy()
+    loss = BinaryCrossentropy(from_logits=True)
 
     model.compile(
         loss=loss,
-        optimizer=Adam(),
-        metrics=["binary_accuracy", "mse", "precision"],
+        optimizer=SGD(learning_rate=0.001),
+        metrics=["binary_accuracy", "precision"],
     )
 
-    early_stopping = EarlyStopping(
-        monitor="loss", patience=10, mode="min", start_from_epoch=20
-    )
+    early_stopping = EarlyStopping(monitor="val_loss", patience=10, mode="min")
     history = model.fit(
-        X, y, batch_size=8, epochs=128, callbacks=[early_stopping], validation_split=0.1
+        X, y, batch_size=8, epochs=128, callbacks=[early_stopping], validation_split=0.2
     )
 
     if model.stop_training:
