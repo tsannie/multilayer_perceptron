@@ -11,7 +11,6 @@ def pair_plot(df):
     scatter_kws = {"s": 5, "alpha": 0.5}
     diag_kws = {"bins": 20, "alpha": 0.5}
 
-    # create header for dataframe. The first is diagnostic and other paramx
     header = ["diagnostic"]
     for i in range(1, len(df.columns)):
         header.append("param" + str(i))

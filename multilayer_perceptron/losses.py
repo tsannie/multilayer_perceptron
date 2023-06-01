@@ -25,11 +25,13 @@ class BinaryCrossentropy(Loss):
         self.epsilon = epsilon
 
     def call(self, y_true, y_pred):
+        n = y_true.shape[0]
         if not self.from_logits:
             y_pred = 1 / (1 + np.exp(-y_pred))
         y_pred = np.clip(y_pred, self.epsilon, 1 - self.epsilon)
-        y_pred = -y_true * np.log(y_pred) - (1 - y_true) * np.log(1 - y_pred)
-        return np.mean(np.sum(y_pred, axis=1))
+        return (
+            -1 / n * np.sum(y_true * np.log(y_pred) + (1 - y_true) * np.log(1 - y_pred))
+        )
 
     def derivative(self, y_true, y_pred):
         y_pred = np.clip(y_pred, self.epsilon, 1 - self.epsilon)

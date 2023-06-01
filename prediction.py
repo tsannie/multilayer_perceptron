@@ -6,16 +6,7 @@ import argparse
 from multilayer_perceptron.sequential import Sequential
 from multilayer_perceptron.dense_layer import Dense
 from train_model import standardize, one_hot_encoding
-
-
-def binary_cross_entropy(y_true, y_pred):
-    """Binary cross entropy loss function"""
-
-    n = y_true.shape[0]
-    epsilon = 1e-7
-
-    y_pred = np.clip(y_pred, epsilon, 1 - epsilon)
-    return -1 / n * np.sum(y_true * np.log(y_pred) + (1 - y_true) * np.log(1 - y_pred))
+from multilayer_perceptron.losses import BinaryCrossentropy
 
 
 def load_model(model_json):
@@ -65,10 +56,12 @@ if __name__ == "__main__":
 
     print("Loading dataset")
     with open(args.dataset, "r") as f:
-        df = pd.read_csv(f, header=None)
+        df = pd.read_csv(f, header=None, index_col=0)
 
-    X = standardize(df.values[:, 2:].astype(float))
-    y = one_hot_encoding(df.values[:, 1])
+    X = df.values[:, 1:]
+
+    y = one_hot_encoding(df.values[:, 0])
+    X = standardize(X.astype(float))
 
     # load the model
     model = load_model(model)
@@ -76,7 +69,10 @@ if __name__ == "__main__":
     # predictions on the dataset
     predictions = model.predict(X)
     predictions = np.round(predictions)
-    score = binary_cross_entropy(y, predictions)
-    print("Binary cross entropy loss: ", score)
+
+    loss = BinaryCrossentropy(from_logits=True)
+    x = loss(y, predictions)
+    print("Binary cross entropy loss: ", x)
+
     accuracy = np.sum(np.argmax(predictions, axis=1) == np.argmax(y, axis=1)) / len(y)
     print("Accuracy: ", accuracy)

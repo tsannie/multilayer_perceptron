@@ -13,6 +13,7 @@ from multilayer_perceptron.dense_layer import Dense
 from multilayer_perceptron.sequential import Sequential
 from multilayer_perceptron.callbacks import EarlyStopping
 from multilayer_perceptron.optimizers import SGD, RMSprop, Adam
+from multilayer_perceptron.losses import BinaryCrossentropy
 
 # from tensorflow.keras.models import Sequential
 # from tensorflow.keras.layers import Dense
@@ -25,25 +26,29 @@ def train_model(X, y, graph=False):
     print("Training model most suitable for the dataset")
 
     model = Sequential()
-    model.add(Dense(2, input_dim=X.shape[1], activation="sigmoid"))
-    model.add(Dense(24, activation="sigmoid", kernel_initializer="he_uniform"))
-    model.add(Dense(32, activation="tanh", kernel_initializer="he_uniform"))
-    model.add(Dense(42, activation="sigmoid", kernel_initializer="he_uniform"))
-    model.add(Dense(32, activation="tanh", kernel_initializer="he_uniform"))
-    model.add(Dense(24, activation="sigmoid", kernel_initializer="he_uniform"))
-    model.add(Dense(2, activation="softmax", kernel_initializer="he_uniform"))
+    model.add(Dense(4, input_dim=X.shape[1], activation="sigmoid"))
+    model.add(Dense(8, activation="tanh", kernel_initializer="random_uniform"))
+    model.add(Dense(2, activation="softmax"))
+
+    loss = BinaryCrossentropy()
 
     model.compile(
-        loss="binary_crossentropy",
-        optimizer=SGD(learning_rate=0.01, momentum=0.9),
+        loss=loss,
+        optimizer=Adam(),
         metrics=["binary_accuracy", "mse", "precision"],
     )
 
-    early_stopping = EarlyStopping(monitor="val_loss", patience=3, mode="min")
+    early_stopping = EarlyStopping(
+        monitor="loss", patience=10, mode="min", start_from_epoch=20
+    )
     history = model.fit(
-        X, y, batch_size=8, epochs=64, callbacks=[early_stopping], validation_split=0.2
+        X, y, batch_size=8, epochs=128, callbacks=[early_stopping], validation_split=0.1
     )
 
+    if model.stop_training:
+        print("Training stopped early")
+    else:
+        model.save("./data/model.json")
     if graph:
         metrics = history.history.keys()
 
@@ -65,8 +70,6 @@ def train_model(X, y, graph=False):
             axs[i].legend(["Train", "Validation"], loc="upper left")
 
         plt.show()
-
-        model.save("./data/model.json")
 
 
 def train_optimizer(X, y, optimizer):
@@ -142,10 +145,12 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     with open(args.dataset, "r") as f:
-        df = pd.read_csv(f, header=None)
+        df = pd.read_csv(f, header=None, index_col=0)
 
-    y = one_hot_encoding(df.values[:, 1])
-    X = standardize(df.values[:, 2:].astype(float))
+    X = df.values[:, 1:]
+
+    y = one_hot_encoding(df.values[:, 0])
+    X = standardize(X.astype(float))
 
     if args.optimizer:
         test_all_optimizers(X, y)

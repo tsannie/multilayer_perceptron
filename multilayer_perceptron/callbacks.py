@@ -16,7 +16,7 @@ class Callback:
 
 
 class EarlyStopping(Callback):
-    def __init__(self, monitor="loss", patience=0, mode="min"):
+    def __init__(self, monitor="loss", patience=0, mode="min", start_from_epoch=0):
         super().__init__()
         if mode not in ["min", "max"]:
             raise ValueError("mode must be either min, or max.")
@@ -25,13 +25,16 @@ class EarlyStopping(Callback):
         self.monitor = monitor
         self.best_value = None
         self.wait = 0
+        self.best_epoch = None
+        self.start_from_epoch = start_from_epoch
 
     def on_epoch_end(self, epoch, logs=None):
         if self.monitor not in logs:
             print("WARNING: Early stopping requires {} available!".format(self.monitor))
             return
 
-        # get last value of the monitor
+        if epoch < self.start_from_epoch:
+            return
         current_value = logs.get(self.monitor)[-1]
         if self.best_value is None:
             self.best_value = current_value
@@ -40,6 +43,7 @@ class EarlyStopping(Callback):
         ):
             self.best_value = current_value
             self.best_epoch = epoch
+            self.model.save("./data/model.json")
             self.wait = 0
         else:
             self.wait += 1

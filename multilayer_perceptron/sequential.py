@@ -61,7 +61,6 @@ class Sequential:
             else:
                 self.layers[layer].initialize(self.layers[layer - 1].n_neurons)
 
-        # init elements of history
         self.history.append("loss")
         for metric in self.metrics:
             self.history.append(metric.name)
@@ -105,7 +104,6 @@ class Sequential:
                 set_callbacks(self, callback)
 
         if validation_split > 0:
-            x, y = shuffle_dataset(x, y)
             x, y, x_val, y_val = split_dataset(x, y, ratio_train=(1 - validation_split))
 
         for epoch in range(epochs):
@@ -231,7 +229,6 @@ class Sequential:
         return np.concatenate(predictions)
 
     def save(self, path):
-        # save the network topology
         import json
 
         topology = {
