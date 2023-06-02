@@ -75,6 +75,7 @@ class Sequential:
         epochs=1,
         callbacks=None,
         validation_split=0.0,
+        validation_data=None,
     ):
         if not self.compiled:
             raise RuntimeError("Model must be compiled before fitting.")
@@ -94,6 +95,17 @@ class Sequential:
         if batch_size is None:
             batch_size = x.shape[0]
 
+        if validation_data is not None and validation_split > 0:
+            raise ValueError(
+                "validation_data and validation_split cannot be specified at the same time."
+            )
+
+        if validation_data is not None:
+            if not isinstance(validation_data, tuple) or len(validation_data) != 2:
+                raise TypeError(
+                    "validation_data must be a tuple of numpy arrays (x_val, y_val)."
+                )
+
         @check_arguments(callbacks_module.CALLBACKS)
         def set_callbacks(self, argument):
             argument.set_model(self)
@@ -106,15 +118,19 @@ class Sequential:
         if validation_split > 0:
             x, y, x_val, y_val = split_dataset(x, y, ratio_train=(1 - validation_split))
 
+        if validation_data is not None:
+            x_val, y_val = validation_data
+
+        self.save_metrics(x, y, batch_size)
+        if validation_split > 0 or validation_data is not None:
+            self.save_metrics(x_val, y_val, batch_size, validation=True)
+
         for epoch in range(epochs):
             if self.stop_training:
                 break
 
             for callback in self.callbacks:
                 callback.on_epoch_begin(epoch, self.history.history)
-
-            for metric in self.metrics:
-                metric.reset_state()
 
             metrics_format = ""
             for history in self.history.history:
@@ -151,19 +167,9 @@ class Sequential:
                     layer.bias = self.optimizer.apply_gradients(layer.dB, layer.bias)
                     self.optimizer.reset()
 
-                for metric in self.metrics:
-                    metric.update_state(y_batch, output)
-
-            training_loss = self.loss(y, self.predict(x))
-            self.history.append("loss", training_loss)
-            for metric in self.metrics:
-                self.history.append(metric.name, metric.result())
-
-            if validation_split > 0:
-                scores = self.evaluate(x_val, y_val, batch_size)
-                self.history.append("val_loss", scores[0])
-                for i in range(1, len(scores)):
-                    self.history.append("val_" + self.metrics[i - 1].name, scores[i])
+            self.save_metrics(x, y, batch_size)
+            if validation_split > 0 or validation_data is not None:
+                self.save_metrics(x_val, y_val, batch_size, validation=True)
 
             for callback in self.callbacks:
                 callback.on_epoch_end(epoch, self.history.history)
@@ -171,6 +177,18 @@ class Sequential:
             print()
 
         return self.history
+
+    def save_metrics(self, x=None, y=None, batch_size=None, validation=False):
+        scores = self.evaluate(x, y, batch_size)
+        if validation:
+            self.history.append("val_loss", scores[0])
+        else:
+            self.history.append("loss", scores[0])
+        for i in range(1, len(scores)):
+            if validation:
+                self.history.append("val_" + self.metrics[i - 1].name, scores[i])
+            else:
+                self.history.append(self.metrics[i - 1].name, scores[i])
 
     def evaluate(self, x=None, y=None, batch_size=None):
         if x is None or y is None:

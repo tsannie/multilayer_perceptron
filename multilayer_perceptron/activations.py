@@ -44,6 +44,34 @@ class ReLU(Activation):
         return np.where(x > 0, 1, 0)
 
 
+class LeakyReLU(Activation):
+    """LeakyReLU activation activate. range (-inf, inf)"""
+
+    def __init__(self, alpha=0.3):
+        super().__init__("leaky_relu")
+        self.alpha = alpha
+
+    def activate(self, x):
+        return np.where(x > 0, x, self.alpha * x)
+
+    def derivative(self, x):
+        return np.where(x > 0, 1, self.alpha)
+
+
+class ELU(Activation):
+    """ELU activation activate. range (-inf, inf)"""
+
+    def __init__(self, alpha=1.0):
+        super().__init__("elu")
+        self.alpha = alpha
+
+    def activate(self, x):
+        return np.where(x > 0, x, self.alpha * (np.exp(x) - 1))
+
+    def derivative(self, x):
+        return np.where(x > 0, 1, self.alpha * np.exp(x))
+
+
 class Sigmoid(Activation):
     """Sigmoid activation activate. range [0, 1]"""
 
@@ -128,6 +156,8 @@ class Exponential(Activation):
 ACTIVATION_FUNCTIONS = {
     "linear": Linear,
     "relu": ReLU,
+    "leaky_relu": LeakyReLU,
+    "elu": ELU,
     "sigmoid": Sigmoid,
     "softmax": Softmax,
     "softplus": Softplus,

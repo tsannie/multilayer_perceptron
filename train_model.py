@@ -11,7 +11,7 @@ from multilayer_perceptron.utils import (
 )
 from multilayer_perceptron.dense_layer import Dense
 from multilayer_perceptron.sequential import Sequential
-from multilayer_perceptron.callbacks import EarlyStopping
+from multilayer_perceptron.callbacks import EarlyStopping, ModelCheckpoint
 from multilayer_perceptron.optimizers import SGD, RMSprop, Adam
 from multilayer_perceptron.losses import BinaryCrossentropy
 
@@ -22,33 +22,46 @@ from multilayer_perceptron.losses import BinaryCrossentropy
 file_name = "./data/data.csv"
 
 
-def train_model(X, y, graph=False):
+def train_model(X, y, X_test=None, y_test=None, graph=False):
     print("Training model most suitable for the dataset")
 
     model = Sequential()
-    model.add(Dense(32, input_dim=X.shape[1], activation="relu"))
-    model.add(Dense(256, activation="sigmoid"))
-    model.add(Dense(128, activation="sigmoid", kernel_initializer="he_uniform"))
-    model.add(Dense(128, activation="relu"))
+    model.add(Dense(64, input_dim=X.shape[1], activation="sigmoid"))
+    model.add(Dense(256, activation="relu", kernel_initializer="he_uniform"))
+    model.add(Dense(128, activation="leaky_relu", kernel_initializer="he_uniform"))
+    model.add(Dense(64, activation="relu"))
     model.add(Dense(2, activation="softmax"))
 
     loss = BinaryCrossentropy(from_logits=True)
 
     model.compile(
         loss=loss,
-        optimizer=SGD(learning_rate=0.001),
+        optimizer=Adam(learning_rate=0.001),
         metrics=["binary_accuracy", "precision"],
     )
 
-    early_stopping = EarlyStopping(monitor="val_loss", patience=10, mode="min")
-    history = model.fit(
-        X, y, batch_size=8, epochs=128, callbacks=[early_stopping], validation_split=0.2
-    )
+    early_stopping = EarlyStopping(monitor="val_loss", patience=16, mode="min")
+    checkpoint = ModelCheckpoint("./data/model.json", monitor="val_loss", mode="min")
 
-    if model.stop_training:
-        print("Training stopped early")
+    if X_test is not None and y_test is not None:
+        history = model.fit(
+            X,
+            y,
+            batch_size=8,
+            epochs=256,
+            callbacks=[early_stopping, checkpoint],
+            validation_data=(X_test, y_test),
+        )
     else:
-        model.save("./data/model.json")
+        history = model.fit(
+            X,
+            y,
+            batch_size=8,
+            epochs=256,
+            callbacks=[early_stopping, checkpoint],
+            validation_split=0.2,
+        )
+
     if graph:
         metrics = history.history.keys()
 
@@ -125,11 +138,32 @@ def test_all_optimizers(X, y):
     plt.show()
 
 
+def read_dataset(path):
+    with open(path, "r") as f:
+        df = pd.read_csv(f, index_col=0)
+
+    X = df.values[:, 1:]
+
+    y = one_hot_encoding(df.values[:, 0])
+    X = standardize(X.astype(float))
+
+    return X, y
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
-        "dataset", type=str, help="Path to the dataset", metavar="dataset_path"
+        "dataset",
+        type=str,
+        help="Path to the dataset",
+        metavar="dataset_path",
+    )
+    parser.add_argument(
+        "-dt",
+        "--datatest",
+        help="Test the dataset",
+        default=None,
     )
     parser.add_argument(
         "-o",
@@ -139,20 +173,23 @@ if __name__ == "__main__":
         action="store_true",
     )
     parser.add_argument(
-        "-g", "--graph", help="Display graph", default=False, action="store_true"
+        "-g",
+        "--graph",
+        help="Display graph",
+        default=False,
+        action="store_true",
     )
 
     args = parser.parse_args()
 
-    with open(args.dataset, "r") as f:
-        df = pd.read_csv(f, header=None, index_col=0)
-
-    X = df.values[:, 1:]
-
-    y = one_hot_encoding(df.values[:, 0])
-    X = standardize(X.astype(float))
+    X, y = read_dataset(args.dataset)
+    if args.datatest:
+        X_test, y_test = read_dataset(args.datatest)
 
     if args.optimizer:
         test_all_optimizers(X, y)
     else:
-        train_model(X, y, args.graph)
+        if args.datatest:
+            train_model(X, y, X_test, y_test, args.graph)
+        else:
+            train_model(X, y, args.graph)
