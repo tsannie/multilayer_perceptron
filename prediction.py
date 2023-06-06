@@ -65,7 +65,7 @@ if __name__ == "__main__":
 
     loss = BinaryCrossentropy(from_logits=True)
     x = loss(y, predictions)
-    print("Binary cross entropy loss: {:.2f}".format(x))
+    print("Binary cross entropy loss: {:.4f}".format(x))
 
     accuracy = np.sum(np.argmax(predictions, axis=1) == np.argmax(y, axis=1)) / len(y)
     print("Accuracy: {:.2f}".format(accuracy))
