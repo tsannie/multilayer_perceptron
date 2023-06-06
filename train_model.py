@@ -8,6 +8,7 @@ from multilayer_perceptron.utils import (
     standardize,
     shuffle_dataset,
     split_dataset,
+    replace_outliers,
 )
 from multilayer_perceptron.dense_layer import Dense
 from multilayer_perceptron.sequential import Sequential
@@ -26,21 +27,21 @@ def train_model(X, y, X_test=None, y_test=None, graph=False):
     print("Training model most suitable for the dataset")
 
     model = Sequential()
-    model.add(Dense(64, input_dim=X.shape[1], activation="sigmoid"))
+    model.add(Dense(32, input_dim=X.shape[1], activation="sigmoid"))
     model.add(Dense(256, activation="relu", kernel_initializer="he_uniform"))
-    model.add(Dense(128, activation="leaky_relu", kernel_initializer="he_uniform"))
-    model.add(Dense(64, activation="relu"))
+    model.add(Dense(128, activation="leaky_relu"))
+    model.add(Dense(32, activation="relu"))
     model.add(Dense(2, activation="softmax"))
 
     loss = BinaryCrossentropy(from_logits=True)
 
     model.compile(
         loss=loss,
-        optimizer=Adam(learning_rate=0.001),
+        optimizer=SGD(learning_rate=0.001, momentum=0.9, nesterov=True),
         metrics=["binary_accuracy", "precision"],
     )
 
-    early_stopping = EarlyStopping(monitor="val_loss", patience=16, mode="min")
+    early_stopping = EarlyStopping(monitor="val_loss", min_delta=0.01, patience=3)
     checkpoint = ModelCheckpoint("./data/model.json", monitor="val_loss", mode="min")
 
     if X_test is not None and y_test is not None:
@@ -48,7 +49,7 @@ def train_model(X, y, X_test=None, y_test=None, graph=False):
             X,
             y,
             batch_size=8,
-            epochs=256,
+            epochs=128,
             callbacks=[early_stopping, checkpoint],
             validation_data=(X_test, y_test),
         )
@@ -57,7 +58,7 @@ def train_model(X, y, X_test=None, y_test=None, graph=False):
             X,
             y,
             batch_size=8,
-            epochs=256,
+            epochs=128,
             callbacks=[early_stopping, checkpoint],
             validation_split=0.2,
         )
@@ -140,12 +141,21 @@ def test_all_optimizers(X, y):
 
 def read_dataset(path):
     with open(path, "r") as f:
-        df = pd.read_csv(f, index_col=0)
+        df = pd.read_csv(f, header=None, index_col=0)
 
-    X = df.values[:, 1:]
+    df = df.values
+    Y = df[:, 0]
+    X = df[:, [1, 2, 3, 4, 5, 7, 8, 11, 13, 14, 21, 23, 24, 26, 27, 28]]
 
-    y = one_hot_encoding(df.values[:, 0])
-    X = standardize(X.astype(float))
+    classes = np.unique(Y)
+
+    for i in range(X.shape[1]):
+        for classe in classes:
+            mean = np.mean(X[Y == classe, i])
+            X[Y == classe, i] = replace_outliers(X[Y == classe, i], mean)
+
+    y = one_hot_encoding(Y)
+    X = standardize(X.astype(np.float32))
 
     return X, y
 

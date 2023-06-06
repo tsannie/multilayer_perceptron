@@ -5,7 +5,7 @@ import argparse
 
 from multilayer_perceptron.sequential import Sequential
 from multilayer_perceptron.dense_layer import Dense
-from train_model import standardize, one_hot_encoding
+from train_model import standardize, one_hot_encoding, read_dataset
 from multilayer_perceptron.losses import BinaryCrossentropy
 
 
@@ -54,14 +54,7 @@ if __name__ == "__main__":
     with open(args.model, "r") as f:
         model = json.load(f)
 
-    print("Loading dataset")
-    with open(args.dataset, "r") as f:
-        df = pd.read_csv(f, header=None, index_col=0)
-
-    X = df.values[:, 1:]
-
-    y = one_hot_encoding(df.values[:, 0])
-    X = standardize(X.astype(float))
+    X, y = read_dataset(args.dataset)
 
     # load the model
     model = load_model(model)

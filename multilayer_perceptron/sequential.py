@@ -76,6 +76,7 @@ class Sequential:
         callbacks=None,
         validation_split=0.0,
         validation_data=None,
+        shuffle=True,
     ):
         if not self.compiled:
             raise RuntimeError("Model must be compiled before fitting.")
@@ -141,13 +142,16 @@ class Sequential:
                     else self.history.history[history][-1],
                 )
 
-            x, y = shuffle_dataset(x, y)
+            if shuffle:
+                x, y = shuffle_dataset(x, y)
 
             print("Epoch {}/{}".format(epoch + 1, epochs))
             for i in tqdm(
                 range(0, x.shape[0], batch_size),
                 desc=metrics_format,
             ):
+                for callback in self.callbacks:
+                    callback.on_batch_begin(i, self.history.history)
                 x_batch = x[i : i + batch_size]
                 y_batch = y[i : i + batch_size]
 
@@ -167,13 +171,15 @@ class Sequential:
                     layer.bias = self.optimizer.apply_gradients(layer.dB, layer.bias)
                     self.optimizer.reset()
 
-            self.save_metrics(x, y, batch_size)
-            if validation_split > 0 or validation_data is not None:
-                self.save_metrics(x_val, y_val, batch_size, validation=True)
+                self.save_metrics(x, y, batch_size)
+                if validation_split > 0 or validation_data is not None:
+                    self.save_metrics(x_val, y_val, batch_size, validation=True)
+
+                for callback in self.callbacks:
+                    callback.on_batch_end(epoch, self.history.history)
 
             for callback in self.callbacks:
                 callback.on_epoch_end(epoch, self.history.history)
-
             print()
 
         return self.history

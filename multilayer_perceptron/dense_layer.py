@@ -2,6 +2,7 @@ import numpy as np
 from multilayer_perceptron import initializers
 from multilayer_perceptron import activations
 from multilayer_perceptron.utils import check_arguments
+from multilayer_perceptron import regularizers
 
 
 class Dense:
@@ -12,6 +13,8 @@ class Dense:
         input_dim=None,
         kernel_initializer="glorot_uniform",
         bias_initializer="zeros",
+        kernel_regularizer=None,
+        bias_regularizer=None,
     ):
         self.n_neurons = n_neurons
         self.weights = None
@@ -21,22 +24,28 @@ class Dense:
         self.input_dim = input_dim
         self.dW = None
         self.dB = None
+        self.kernel_regularizer = None
+        self.bias_regularizer = None
 
         @check_arguments(activations.ACTIVATION_FUNCTIONS)
-        def set_activation(self, argument):
-            self.activation = argument
+        def init_activation(self, argument):
+            return argument
 
         @check_arguments(initializers.WEIGHTS_INITIALIZERS)
-        def set_kernel_initializer(self, argument):
-            self.kernel_initializer = argument
+        def init_weights(self, argument):
+            return argument
 
-        @check_arguments(initializers.WEIGHTS_INITIALIZERS)
-        def set_bias_initializer(self, argument):
-            self.bias_initializer = argument
+        @check_arguments(regularizers.REGULARIZERS)
+        def init_regularizer(self, argument):
+            return argument
 
-        set_activation(self, activation)
-        set_kernel_initializer(self, kernel_initializer)
-        set_bias_initializer(self, bias_initializer)
+        self.activation = init_activation(self, activation)
+        self.kernel_initializer = init_weights(self, kernel_initializer)
+        self.bias_initializer = init_weights(self, bias_initializer)
+        if kernel_regularizer is not None:
+            self.kernel_regularizer = init_regularizer(self, kernel_regularizer)
+        if bias_regularizer is not None:
+            self.bias_regularizer = init_regularizer(self, bias_regularizer)
 
     def set_weights(self, weights):
         if weights.shape != self.weights.shape:
@@ -57,12 +66,27 @@ class Dense:
 
     def forward(self, inputs):
         self.inputs = inputs
-        self.z = np.dot(self.inputs, self.weights) + self.bias
+        self.z = np.dot(inputs, self.weights) + self.bias
+
+        if self.kernel_regularizer is not None:
+            self.z += self.kernel_regularizer(self.weights)
+
+        if self.bias_regularizer is not None:
+            self.z += self.bias_regularizer(self.bias)
+
         return self.activation(self.z)
 
     def backward(self, grad):
         grad = grad * self.activation.derivative(self.z)
+
         self.dW = np.dot(self.inputs.T, grad)
+        if self.kernel_regularizer is not None:
+            self.dW += self.kernel_regularizer.derivative(self.dW)
+
         self.dB = np.sum(grad, axis=0, keepdims=True)
+        if self.bias_regularizer is not None:
+            self.dB += self.bias_regularizer.derivative(self.dB)
+
         grad_inputs = np.dot(grad, self.weights.T)
+
         return grad_inputs
