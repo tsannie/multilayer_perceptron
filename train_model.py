@@ -2,12 +2,11 @@ import pandas as pd
 import numpy as np
 import argparse
 import matplotlib.pyplot as plt
+from imblearn.over_sampling import SMOTE
 
 from multilayer_perceptron.utils import (
     one_hot_encoding,
     standardize,
-    shuffle_dataset,
-    split_dataset,
     replace_outliers,
 )
 from multilayer_perceptron.dense_layer import Dense
@@ -16,10 +15,6 @@ from multilayer_perceptron.callbacks import EarlyStopping, ModelCheckpoint
 from multilayer_perceptron.optimizers import SGD, RMSprop, Adam
 from multilayer_perceptron.losses import BinaryCrossentropy
 
-# from tensorflow.keras.models import Sequential
-# from tensorflow.keras.layers import Dense
-# from tensorflow.keras.callbacks import EarlyStopping
-
 file_name = "./data/data.csv"
 
 
@@ -27,17 +22,18 @@ def train_model(X, y, X_test=None, y_test=None, graph=False):
     print("Training model most suitable for the dataset")
 
     model = Sequential()
-    model.add(Dense(32, input_dim=X.shape[1], activation="sigmoid"))
+    model.add(Dense(64, input_dim=X.shape[1], activation="relu"))
     model.add(Dense(256, activation="relu", kernel_initializer="he_uniform"))
     model.add(Dense(128, activation="leaky_relu"))
-    model.add(Dense(32, activation="relu"))
+    model.add(Dense(128, activation="relu", kernel_initializer="he_uniform"))
+    model.add(Dense(64, activation="tanh"))
     model.add(Dense(2, activation="softmax"))
 
     loss = BinaryCrossentropy(from_logits=True)
 
     model.compile(
         loss=loss,
-        optimizer=SGD(learning_rate=0.001, momentum=0.9, nesterov=True),
+        optimizer=SGD(learning_rate=0.0001, momentum=0.9, nesterov=True),
         metrics=["binary_accuracy", "precision"],
     )
 
@@ -139,20 +135,24 @@ def test_all_optimizers(X, y):
     plt.show()
 
 
-def read_dataset(path):
+def read_dataset(path, test=False):
     with open(path, "r") as f:
         df = pd.read_csv(f, header=None, index_col=0)
 
     df = df.values
     Y = df[:, 0]
-    X = df[:, [1, 2, 3, 4, 5, 7, 8, 11, 13, 14, 21, 23, 24, 26, 27, 28]]
+    X = df[:, 1:]
 
     classes = np.unique(Y)
 
+    if not test:
+        smote = SMOTE()
+        X, Y = smote.fit_resample(X, Y)
+
     for i in range(X.shape[1]):
-        for classe in classes:
-            mean = np.mean(X[Y == classe, i])
-            X[Y == classe, i] = replace_outliers(X[Y == classe, i], mean)
+        for c in classes:
+            median = np.median(X[Y == c, i])
+            X[Y == c, i] = replace_outliers(X[Y == c, i], median)
 
     y = one_hot_encoding(Y)
     X = standardize(X.astype(np.float32))
@@ -194,7 +194,7 @@ if __name__ == "__main__":
 
     X, y = read_dataset(args.dataset)
     if args.datatest:
-        X_test, y_test = read_dataset(args.datatest)
+        X_test, y_test = read_dataset(args.datatest, test=True)
 
     if args.optimizer:
         test_all_optimizers(X, y)

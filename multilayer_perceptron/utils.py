@@ -76,7 +76,7 @@ def standardize(X):
     return X
 
 
-def replace_outliers(data, mean, threshold=3):
+def replace_outliers(data, mean, threshold=50):
     """Replace outliers by the mean of the class"""
 
     return np.where(np.abs(data - mean) > threshold, mean, data)

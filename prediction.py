@@ -5,7 +5,7 @@ import argparse
 
 from multilayer_perceptron.sequential import Sequential
 from multilayer_perceptron.dense_layer import Dense
-from train_model import standardize, one_hot_encoding, read_dataset
+from train_model import read_dataset
 from multilayer_perceptron.losses import BinaryCrossentropy
 
 
@@ -54,14 +54,13 @@ if __name__ == "__main__":
     with open(args.model, "r") as f:
         model = json.load(f)
 
-    X, y = read_dataset(args.dataset)
+    X, y = read_dataset(args.dataset, test=True)
 
     # load the model
     model = load_model(model)
 
     # predictions on the dataset
     predictions = model.predict(X)
-    # predictions = np.round(predictions)
 
     loss = BinaryCrossentropy(from_logits=True)
     x = loss(y, predictions)
