@@ -124,7 +124,7 @@ def test_all_optimizers(X, y):
     plt.figure(figsize=(12, 8))
     for i, history in enumerate(histories):
         plt.plot(history.history["loss"], label=optimizer_name[i])
-    plt.xlabel("Epochs")
+    plt.xlabel("Iteration")
     plt.ylabel("Loss")
     plt.legend()
     plt.show()

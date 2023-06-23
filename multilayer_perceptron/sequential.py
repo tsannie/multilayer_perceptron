@@ -273,3 +273,49 @@ class Sequential:
 
         with open(path, "w") as f:
             json.dump(topology, f, indent=4)
+
+    def load(self, path):
+        import json
+
+        with open(path, "r") as f:
+            model_json = json.load(f)
+
+        for layer in model_json["layers"]:
+            if layer["type"] == "input":
+                self.add(
+                    dense_layer.Dense(
+                        layer["n_neurons"],
+                        input_dim=layer["input_dim"],
+                        activation=layer["activation"],
+                    )
+                )
+            else:
+                self.add(
+                    dense_layer.Dense(
+                        layer["n_neurons"], activation=layer["activation"]
+                    )
+                )
+
+        self.compile(
+            optimizer=model_json["optimizer"],
+            loss=model_json["loss"],
+        )
+
+        for i in range(len(self.layers)):
+            w = np.array(model_json["weights"][i]).astype(float)
+            b = np.array(model_json["biases"][i]).astype(float)
+            self.layers[i].set_weights(w)
+            self.layers[i].set_bias(b)
+
+    def summary(self):
+        print("Model: Sequential")
+        print("Optimizer: {}".format(self.optimizer.name))
+        print("Loss: {}".format(self.loss.name))
+        print("Metrics: {}".format(", ".join([metric.name for metric in self.metrics])))
+        print("Layers:")
+        for layer in self.layers:
+            print(
+                "\t{}: {} neurons, {} activation".format(
+                    layer.name, layer.n_neurons, layer.activation.name
+                )
+            )

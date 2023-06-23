@@ -9,34 +9,6 @@ from multilayer_perceptron.utils import read_dataset
 from multilayer_perceptron.losses import BinaryCrossentropy
 
 
-def load_model(model_json):
-    """Load the model from the json file"""
-
-    model = Sequential()
-
-    for layer in model_json["layers"]:
-        if layer["type"] == "input":
-            model.add(
-                Dense(
-                    layer["n_neurons"],
-                    input_dim=layer["input_dim"],
-                    activation=layer["activation"],
-                )
-            )
-        else:
-            model.add(Dense(layer["n_neurons"], activation=layer["activation"]))
-
-    model.compile(loss="binary_crossentropy", optimizer="adam", metrics=["accuracy"])
-
-    for i in range(len(model.layers)):
-        w = np.array(model_json["weights"][i]).astype(float)
-        b = np.array(model_json["biases"][i]).astype(float)
-        model.layers[i].set_weights(w)
-        model.layers[i].set_bias(b)
-
-    return model
-
-
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -51,13 +23,12 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    with open(args.model, "r") as f:
-        model = json.load(f)
-
     X, y = read_dataset(args.dataset, test=True)
 
     # load the model
-    model = load_model(model)
+    model = Sequential()
+
+    model.load(args.model)
 
     # predictions on the dataset
     predictions = model.predict(X)
