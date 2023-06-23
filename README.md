@@ -12,6 +12,10 @@ For this project, I am using predictive data to diagnose cancer in cells, with M
 
 ### Optimizers
 
+Optimizers play a crucial role by helping to minimize the loss function and find the optimal values for the model's parameters. They guide the learning process by adjusting the parameters iteratively based on the gradients, leading to improved accuracy and faster convergence during training.
+
+Test for
+
 - [x] Adam
 - [x] Stochastic Gradient Descent
 - [x] Stochastic Gradient Descent with Nesterov Momentum

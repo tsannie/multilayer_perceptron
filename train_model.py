@@ -2,13 +2,8 @@ import pandas as pd
 import numpy as np
 import argparse
 import matplotlib.pyplot as plt
-from imblearn.over_sampling import SMOTE
 
-from multilayer_perceptron.utils import (
-    one_hot_encoding,
-    standardize,
-    replace_outliers,
-)
+from multilayer_perceptron.utils import read_dataset
 from multilayer_perceptron.dense_layer import Dense
 from multilayer_perceptron.sequential import Sequential
 from multilayer_perceptron.callbacks import EarlyStopping, ModelCheckpoint
@@ -37,7 +32,7 @@ def train_model(X, y, X_test=None, y_test=None, graph=False):
         metrics=["binary_accuracy", "precision"],
     )
 
-    early_stopping = EarlyStopping(monitor="val_loss", min_delta=0.01, patience=3)
+    early_stopping = EarlyStopping(monitor="val_loss", min_delta=0.001, patience=3)
     checkpoint = ModelCheckpoint("./data/model.json", monitor="val_loss", mode="min")
 
     if X_test is not None and y_test is not None:
@@ -95,7 +90,7 @@ def train_optimizer(X, y, optimizer):
     model.compile(
         loss="binary_crossentropy",
         optimizer=optimizer,
-        metrics=["accuracy", "binary_accuracy", "precision", "recall"],
+        metrics=["accuracy"],
     )
 
     history = model.fit(X, y, batch_size=8, epochs=42)
@@ -133,31 +128,6 @@ def test_all_optimizers(X, y):
     plt.ylabel("Loss")
     plt.legend()
     plt.show()
-
-
-def read_dataset(path, test=False):
-    with open(path, "r") as f:
-        df = pd.read_csv(f, header=None, index_col=0)
-
-    df = df.values
-    Y = df[:, 0]
-    X = df[:, 1:]
-
-    classes = np.unique(Y)
-
-    if not test:
-        smote = SMOTE()
-        X, Y = smote.fit_resample(X, Y)
-
-    for i in range(X.shape[1]):
-        for c in classes:
-            median = np.median(X[Y == c, i])
-            X[Y == c, i] = replace_outliers(X[Y == c, i], median)
-
-    y = one_hot_encoding(Y)
-    X = standardize(X.astype(np.float32))
-
-    return X, y
 
 
 if __name__ == "__main__":
@@ -200,6 +170,6 @@ if __name__ == "__main__":
         test_all_optimizers(X, y)
     else:
         if args.datatest:
-            train_model(X, y, X_test, y_test, args.graph)
+            train_model(X, y, X_test, y_test, graph=args.graph)
         else:
-            train_model(X, y, args.graph)
+            train_model(X, y, graph=args.graph)

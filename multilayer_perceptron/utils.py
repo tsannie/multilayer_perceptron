@@ -1,4 +1,5 @@
 import numpy as np
+import pandas as pd
 
 
 def check_arguments(valid_options):
@@ -76,7 +77,47 @@ def standardize(X):
     return X
 
 
-def replace_outliers(data, mean, threshold=50):
-    """Replace outliers by the mean of the class"""
+def replace_outliers(data, median):
+    """Replace outliers in the dataset data with median"""
 
-    return np.where(np.abs(data - mean) > threshold, mean, data)
+    q1 = np.quantile(data, 0.25)
+    q3 = np.quantile(data, 0.75)
+    iqr = q3 - q1
+    lower = q1 - 1.25 * iqr
+    upper = q3 + 1.25 * iqr
+
+    data[data < lower] = median
+    data[data > upper] = median
+
+    return data
+
+
+def treat_outliers(X, y):
+    """Treat outliers in the dataset X"""
+
+    for i in range(X.shape[1]):
+        for c in np.unique(y):
+            median = np.median(X[y == c, i])
+            X[y == c, i] = replace_outliers(X[y == c, i], median)
+
+    return X
+
+
+def read_dataset(path, test=False):
+    with open(path, "r") as f:
+        df = pd.read_csv(f, header=None, index_col=0)
+
+    df = df.values
+    Y = df[:, 0]
+
+    X = df[
+        :,
+        [1, 2, 3, 4, 7, 8, 11, 13, 14, 17, 18, 20, 21, 23, 24, 26, 27, 28, 30],
+    ]
+
+    if test:
+        X = treat_outliers(X, Y)
+    y = one_hot_encoding(Y)
+    X = standardize(X.astype(np.float32))
+
+    return X, y

@@ -5,7 +5,7 @@ import argparse
 
 from multilayer_perceptron.sequential import Sequential
 from multilayer_perceptron.dense_layer import Dense
-from train_model import read_dataset
+from multilayer_perceptron.utils import read_dataset
 from multilayer_perceptron.losses import BinaryCrossentropy
 
 
